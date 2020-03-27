@@ -23,6 +23,7 @@ var (
 	block    = 4194304
 	token    = flag.String("cookie", "", "Your User cookie (optional)")
 	parallel = flag.Int("parallel", 4, "parallel task count")
+	interval = flag.Int("timeout", 30, "request retry/timeout limit")
 	debug    = flag.Bool("verbose", false, "Verbose Mode")
 )
 
@@ -51,7 +52,7 @@ func main() {
 		log.Printf("files = %s", files)
 	}
 	if len(files) == 0 {
-		fmt.Println("missing file(s)")
+		fmt.Printf("missing file(s)\n\n")
 		printUsage()
 		return
 	}
@@ -129,7 +130,7 @@ type uploadResponse struct {
 
 func uploader(ch *chan *UploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, token string, hashMap *cmap.ConcurrentMap) {
 	for item := range *ch {
-		client := http.Client{Timeout: 30 * time.Second}
+		client := http.Client{Timeout: time.Duration(*interval) * time.Second}
 		data := new(bytes.Buffer)
 		data.Write(item.content)
 		postURL := fmt.Sprintf(uploadInitEndpoint, len(item.content))

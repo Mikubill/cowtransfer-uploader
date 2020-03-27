@@ -15,17 +15,19 @@ Go语言程序, 可直接在[发布页](https://github.com/Mikubill/cowtransfer-
   -cookie string
         Your User cookie (optional)
   -parallel int
-        parallel task count (default 4)
+        parallel task count (default 4) (default 4)
+  -timeout int
+        request retry/timeout limit (default 30s) (default 30)
   -verbose
         Verbose Mode
-
 ```
 
 Note: 
 
-* cookie可选，可以直接不带任何选项上传文件
-* parallel控制的是并发数量
-* verbose开启详细日志，可以看到这个程序每一步都干了啥
+* `-cookie` 可选，可以直接不带任何选项上传文件。
+* `-parallel` 上传并发数，默认为4。如果觉得上传速度太慢也可以试试更高的值。
+* `-timeout` 上传超时时间，默认为30秒。
+* `-verbose` 开启详细日志，可以看到这个程序每一步都干了啥。
 
 ## 缘起
 
