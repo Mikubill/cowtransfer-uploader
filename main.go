@@ -20,19 +20,19 @@ import (
 )
 
 var (
-	block = 4194304
-	token = flag.String("cookie", "", "Your User cookie (optional)")
+	block    = 4194304
+	token    = flag.String("cookie", "", "Your User cookie (optional)")
 	parallel = flag.Int("parallel", 4, "parallel task count")
-	debug = flag.Bool("verbose", false, "Verbose Mode")
+	debug    = flag.Bool("verbose", false, "Verbose Mode")
 )
 
 const (
-	prepareSend = "https://cowtransfer.com/transfer/preparesend"
-	beforeUpload = "https://cowtransfer.com/transfer/beforeupload"
+	prepareSend        = "https://cowtransfer.com/transfer/preparesend"
+	beforeUpload       = "https://cowtransfer.com/transfer/beforeupload"
 	uploadInitEndpoint = "https://upload.qiniup.com/mkblk/%d"
-	uploadFinish = "https://cowtransfer.com/transfer/uploaded"
-	uploadComplete = "https://cowtransfer.com/transfer/complete"
-	uploadMergeFile = "https://upload.qiniup.com/mkfile/%s/key/%s/fname/%s"
+	uploadFinish       = "https://cowtransfer.com/transfer/uploaded"
+	uploadComplete     = "https://cowtransfer.com/transfer/complete"
+	uploadMergeFile    = "https://upload.qiniup.com/mkfile/%s/key/%s/fname/%s"
 )
 
 type UploadPart struct {
@@ -84,7 +84,7 @@ func main() {
 
 		wg := new(sync.WaitGroup)
 		ch := make(chan *UploadPart)
-		hashMap :=	cmap.New()
+		hashMap := cmap.New()
 		for i := 0; i < *parallel; i++ {
 			go uploader(&ch, wg, bar, config.UploadToken, &hashMap)
 		}
@@ -157,7 +157,7 @@ func uploader(ch *chan *UploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 		}
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			if *debug{
+			if *debug {
 				log.Printf("failed uploading part %d error: %v (retring)", item.count, err)
 			}
 			*ch <- item
@@ -200,14 +200,14 @@ func finishUpload(config *prepareSendResp, info os.FileInfo, hashMap *cmap.Concu
 	fileLocate := urlSafeEncode(fmt.Sprintf("anonymous/%s/%s", config.TransferGUID, info.Name()))
 	mergeFileURL := fmt.Sprintf(uploadMergeFile, strconv.FormatInt(info.Size(), 10), fileLocate, filename)
 	postBody := ""
-	for i:=int64(1); i<=limit; i++ {
+	for i := int64(1); i <= limit; i++ {
 		item, alimasu := hashMap.Get(strconv.FormatInt(i, 10))
 		if alimasu {
 			postBody += item.(string) + ","
 		}
 	}
 	if strings.HasSuffix(postBody, ",") {
-		postBody = postBody[:len(postBody) -1 ]
+		postBody = postBody[:len(postBody)-1]
 	}
 	if *debug {
 		log.Printf("merge payload: %s\n", postBody)
@@ -231,7 +231,6 @@ func finishUpload(config *prepareSendResp, info os.FileInfo, hashMap *cmap.Concu
 		return err
 	}
 
-
 	return nil
 }
 
@@ -252,7 +251,7 @@ func getUploadConfig(info os.FileInfo) (*prepareSendResp, error) {
 		log.Println("step 1/2 -> prepareSend")
 	}
 
-	data := map[string]string{"totalSize": strconv.FormatInt(info.Size(), 10),}
+	data := map[string]string{"totalSize": strconv.FormatInt(info.Size(), 10)}
 	body, err := newMultipartRequest(prepareSend, data)
 	if err != nil {
 		return nil, err
@@ -268,11 +267,11 @@ func getUploadConfig(info os.FileInfo) (*prepareSendResp, error) {
 		log.Println("step 2/2 -> beforeUpload")
 	}
 	data = map[string]string{
-		"fileId": "",
-		"type": "",
-		"fileName": info.Name(),
-		"fileSize": strconv.FormatInt(info.Size(), 10),
-		"transferGuid": config.TransferGUID,
+		"fileId":        "",
+		"type":          "",
+		"fileName":      info.Name(),
+		"fileSize":      strconv.FormatInt(info.Size(), 10),
+		"transferGuid":  config.TransferGUID,
 		"storagePrefix": config.Prefix,
 	}
 	_, err = newMultipartRequest(beforeUpload, data)
@@ -296,7 +295,7 @@ func newRequest(link string, postBody string, upToken string) ([]byte, error) {
 		return nil, err
 	}
 	req.Header.Set("referer", "https://cowtransfer.com/")
-	req.Header.Set("Authorization", "UpToken " + upToken)
+	req.Header.Set("Authorization", "UpToken "+upToken)
 	if *debug {
 		log.Println(req.Header)
 	}
@@ -331,7 +330,7 @@ func getFileInfo(path string) (os.FileInfo, error) {
 
 func addHeaders(req *http.Request) *http.Request {
 	req.Header.Set("Referer", "https://cowtransfer.com/")
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) " +
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) "+
 		"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
 	req.Header.Set("Origin", "https://cowtransfer.com/")
 	return req

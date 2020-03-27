@@ -6,7 +6,7 @@ Simple cowTransfer Uploader
 
 ## usage
 
-Go语言程序, 可直接在[发布页](https://github.com/Mikubill/acfun-uploader/releases)下载使用。
+Go语言程序, 可直接在[发布页](https://github.com/Mikubill/cowtransfer-uploader/releases)下载使用。
 
 
 ```shell
@@ -21,7 +21,11 @@ Go语言程序, 可直接在[发布页](https://github.com/Mikubill/acfun-upload
 
 ```
 
-Note: cookie可选，可以直接不带任何选项上传文件；parallel控制的是并发数量；verbose开启详细日志，可以看到这个程序每一步都干了啥
+Note: 
+
+* cookie可选，可以直接不带任何选项上传文件
+* parallel控制的是并发数量
+* verbose开启详细日志，可以看到这个程序每一步都干了啥
 
 ## 缘起
 
