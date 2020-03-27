@@ -51,7 +51,7 @@ func main() {
 		log.Printf("files = %s", files)
 	}
 	if len(files) == 0 {
-		fmt.Println("token or uid is missing")
+		fmt.Println("missing file(s)")
 		printUsage()
 		return
 	}
