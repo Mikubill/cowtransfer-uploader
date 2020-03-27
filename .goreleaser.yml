@@ -1,0 +1,17 @@
+builds:
+  -
+    ldflags:
+      - -s -w -X main.build={{.Version}}
+
+    env:
+      - CGO_ENABLED=0
+
+    goos:
+      - linux
+      - freebsd
+      - windows
+      - darwin
+
+    goarch:
+      - amd64
+      - arm64

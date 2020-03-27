@@ -1,0 +1,18 @@
+on: [push, pull_request]
+name: build
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13.x
+      - name: checkout
+        uses: actions/checkout@v1
+      - name: build
+        run: |
+          GOOS=windows GOARCH=amd64 go build -o bin/ci-test-windows-amd64.exe
+          GOOS=linux   GOARCH=amd64 go build -o bin/ci-test-linux-amd64
+          dd if=/dev/random of=bigfile bs=1024 count=102400
+          bin/ci-test-linux-amd64 bigfile
