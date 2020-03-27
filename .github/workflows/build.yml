@@ -14,5 +14,3 @@ jobs:
         run: |
           GOOS=windows GOARCH=amd64 go build -o bin/ci-test-windows-amd64.exe
           GOOS=linux   GOARCH=amd64 go build -o bin/ci-test-linux-amd64
-          dd if=/dev/random of=bigfile bs=1024 count=10240
-          bin/ci-test-linux-amd64 bigfile
