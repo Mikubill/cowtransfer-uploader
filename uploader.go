@@ -176,6 +176,9 @@ func finishUpload(config *prepareSendResp, info os.FileInfo, hashMap *cmap.Concu
 		log.Printf("merge payload: %s\n", postBody)
 	}
 	_, err := newRequest(mergeFileURL, postBody, config.UploadToken)
+	if err != nil {
+		return err
+	}
 
 	if *debug {
 		log.Println("step2 -> api/uploaded")

@@ -30,7 +30,7 @@ type downloadDetailsResponse struct {
 type downloadDetailsBlock struct {
 	GUID     string `json:"guid"`
 	FileName string `json:"fileName"`
-	Size     string  `json:"size"`
+	Size     string `json:"size"`
 }
 
 type downloadConfigResponse struct {
@@ -89,64 +89,66 @@ func download(v string) error {
 	}
 
 	for _, item := range details.Details {
-		if *debug {
-			log.Println("step2 -> api/getConf")
-			log.Printf("fileName: %s\n", item.FileName)
-			log.Printf("fileSize: %s\n", item.Size)
-			log.Printf("GUID: %s\n", item.GUID)
-		}
-		configURL := fmt.Sprintf(downloadConfig, item.GUID)
-		req, err := http.NewRequest("POST", configURL, nil)
+		err = downloadItem(item)
 		if err != nil {
-			fmt.Printf("createRequest returns error: %s, onfile: %s", err, item.FileName)
-			continue
-		}
-		resp, err = http.DefaultClient.Do(addHeaders(req))
-		if err != nil {
-			fmt.Printf("getDownloadConfig returns error: %s, onfile: %s", err, item.FileName)
-			continue
-		}
-
-		body, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Printf("readDownloadConfig returns error: %s, onfile: %s", err, item.FileName)
-			continue
-		}
-
-		_ = resp.Body.Close()
-		if *debug {
-			log.Printf("returns: %v\n", string(body))
-		}
-		config := new(downloadConfigResponse)
-		if err := json.Unmarshal(body, config); err != nil {
-			fmt.Printf("unmatshal DownloadConfig returns error: %s, onfile: %s", err, item.FileName)
-			continue
-		}
-
-		if *debug {
-			log.Println("step3 -> startDownload")
-		}
-		filePath := path.Join(*prefix, item.FileName)
-		fmt.Printf("File save to: %s\n", filePath)
-		numSize, err := strconv.ParseFloat(item.Size, 10)
-		if err != nil {
-			fmt.Printf("failed Parsing with error: %s, onfile: %s", err, item.FileName)
-			continue
-		}
-		bar := pb.Full.Start64(int64(numSize * 1024))
-		bar.Set(pb.Bytes, true)
-		err = downloadFile(filePath, config.Link, bar)
-		bar.Finish()
-		if err != nil {
-			fmt.Printf("failed DownloadConfig with error: %s, onfile: %s", err, item.FileName)
-			continue
+			fmt.Println(err)
 		}
 	}
 	return nil
 }
 
+func downloadItem(item downloadDetailsBlock) error {
+	if *debug {
+		log.Println("step2 -> api/getConf")
+		log.Printf("fileName: %s\n", item.FileName)
+		log.Printf("fileSize: %s\n", item.Size)
+		log.Printf("GUID: %s\n", item.GUID)
+	}
+	configURL := fmt.Sprintf(downloadConfig, item.GUID)
+	req, err := http.NewRequest("POST", configURL, nil)
+	if err != nil {
+		return fmt.Errorf("createRequest returns error: %s, onfile: %s", err, item.FileName)
+	}
+	resp, err := http.DefaultClient.Do(addHeaders(req))
+	if err != nil {
+		return fmt.Errorf("getDownloadConfig returns error: %s, onfile: %s", err, item.FileName)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("readDownloadConfig returns error: %s, onfile: %s", err, item.FileName)
+	}
+
+	_ = resp.Body.Close()
+	if *debug {
+		log.Printf("returns: %v\n", string(body))
+	}
+	config := new(downloadConfigResponse)
+	if err := json.Unmarshal(body, config); err != nil {
+		return fmt.Errorf("unmatshal DownloadConfig returns error: %s, onfile: %s", err, item.FileName)
+	}
+
+	if *debug {
+		log.Println("step3 -> startDownload")
+	}
+	filePath := path.Join(*prefix, item.FileName)
+	fmt.Printf("File save to: %s\n", filePath)
+	numSize, err := strconv.ParseFloat(item.Size, 10)
+	if err != nil {
+		return fmt.Errorf("failed Parsing with error: %s, onfile: %s", err, item.FileName)
+	}
+	bar := pb.Full.Start64(int64(numSize * 1024))
+	bar.Set(pb.Bytes, true)
+	err = downloadFile(filePath, config.Link, bar)
+	bar.Finish()
+	if err != nil {
+		return fmt.Errorf("failed DownloadConfig with error: %s, onfile: %s", err, item.FileName)
+	}
+	return nil
+}
+
 type writeCounter struct {
-	bar *pb.ProgressBar
+	bar    *pb.ProgressBar
 	offset int64
 	writer *os.File
 }
@@ -172,7 +174,7 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 	}()
 
 	if resp.StatusCode > 400 {
-		return fmt.Errorf("link unavaliable, %s", resp.Status)
+		return fmt.Errorf("link unavailable, %s", resp.Status)
 	}
 	length, err := strconv.ParseInt(resp.Header.Get("content-length"), 10, 64)
 	if err != nil {
@@ -194,7 +196,7 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 	if err := out.Truncate(length); err != nil {
 		return fmt.Errorf("tmpfile fruncate failed: %s", err)
 	}
-	if length > 10 * 1024 * 1024 && resp.Header.Get("Accept-Ranges") != "" && *parallel > 1 {
+	if length > 10*1024*1024 && resp.Header.Get("Accept-Ranges") != "" && *parallel > 1 {
 		_parallel = *parallel
 	}
 
@@ -206,7 +208,7 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 		log.Printf("parallel = %d", _parallel)
 		log.Printf("block = %d", blk)
 	}
-	for i:=0; i<=_parallel; i++ {
+	for i := 0; i <= _parallel; i++ {
 		wg.Add(1)
 		start := int64(i) * blk
 		end := start + blk
@@ -231,7 +233,7 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 	return nil
 }
 
-func parallelDownloader(ranger string,  url string, counter *writeCounter, wg *sync.WaitGroup) {
+func parallelDownloader(ranger string, url string, counter *writeCounter, wg *sync.WaitGroup) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Printf("createRequest error: %s\n", err)
