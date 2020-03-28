@@ -8,6 +8,7 @@ Simple cowTransfer Uploader/Downloader
 
 Go语言程序, 可直接在[发布页](https://github.com/Mikubill/cowtransfer-uploader/releases)下载使用。
 
+在可执行文件后加上想要上传的文件/想要下载的链接即可直接食用w
 
 ```shell
 Usage:
