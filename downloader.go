@@ -155,17 +155,22 @@ func (wc *writeCounter) Write(p []byte) (int, error) {
 }
 
 func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
-	out, err := os.Create(filepath + ".tmp")
-	if err != nil {
-		return err
-	}
-	defer out.Close()
 
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode > 400 {
+		return fmt.Errorf("link unavaliable, %s", resp.Status)
+	}
+
+	out, err := os.Create(filepath + ".tmp")
+	if err != nil {
+		return err
+	}
+	defer out.Close()
 
 	counter := &writeCounter{bar: bar}
 	_, err = io.Copy(out, io.TeeReader(resp.Body, counter))

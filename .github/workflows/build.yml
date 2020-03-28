@@ -12,5 +12,5 @@ jobs:
         uses: actions/checkout@v1
       - name: build
         run: |
-          GOOS=windows GOARCH=amd64 go build -o bin/ci-test-windows-amd64.exe
-          GOOS=linux   GOARCH=amd64 go build -o bin/ci-test-linux-amd64
+          GOOS=windows GOARCH=amd64 go build -ldflags '-s -w -extldflags "-static"' -o bin/ci-test-windows-amd64.exe
+          GOOS=linux   GOARCH=amd64 go build -ldflags '-s -w -extldflags "-static"' -o bin/ci-test-linux-amd64

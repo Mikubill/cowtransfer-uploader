@@ -1,7 +1,7 @@
 builds:
   -
     ldflags:
-      - -s -w -X main.build={{.Version}}
+      - -s -w -extldflags "-static" -X main.build={{.Version}}
 
     env:
       - CGO_ENABLED=0
