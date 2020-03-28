@@ -1,4 +1,6 @@
 # cowTransfer-uploader
+<a title="Release" target="_blank" href="https://github.com/Mikubill/cowtransfer-uploader/releases"><img src="https://img.shields.io/github/release/Mikubill/cowtransfer-uploader.svg?style=flat-square&hash=c7"></a>
+<a title="Go Report Card" target="_blank" href="https://goreportcard.com/report/github.com/Mikubill/cowtransfer-uploader"><img src="https://goreportcard.com/badge/github.com/Mikubill/cowtransfer-uploader?style=flat-square"></a>
 
 Simple cowTransfer Uploader/Downloader
 
@@ -8,7 +10,23 @@ Simple cowTransfer Uploader/Downloader
 
 Go语言程序, 可直接在[发布页](https://github.com/Mikubill/cowtransfer-uploader/releases)下载使用。
 
-在可执行文件后加上想要上传的文件/想要下载的链接即可直接食用w
+在可执行文件后加上想要上传的文件/想要下载的链接即可食用。
+
+```shell
+# upload
+./cowtransfer balabala.mp4
+
+# faster upload(?)
+./cowtransfer -parallel 12 balabala.mp4
+
+# debug upload
+./cowtransfer -verbose balabala.mp4
+
+# download
+./cowtransfer https://cowtransfer.com/s/c855d66abd524b
+```
+
+## options
 
 ```shell
 Usage:

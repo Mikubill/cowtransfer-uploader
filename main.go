@@ -51,7 +51,7 @@ func main() {
 			err = upload(v)
 		}
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error: %v", err)
 		}
 
 	}

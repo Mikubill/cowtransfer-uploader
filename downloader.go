@@ -68,12 +68,16 @@ func download(v string) error {
 		return fmt.Errorf("unmatshal DownloadDetails returns error: %s", err)
 	}
 
+	if details.GUID == "" {
+		return fmt.Errorf("link invalid")
+	}
+
 	if details.Deleted {
-		return fmt.Errorf("link: deleted")
+		return fmt.Errorf("link deleted")
 	}
 
 	if !details.Uploaded {
-		return fmt.Errorf("link: not finish upload yet")
+		return fmt.Errorf("link not finish upload yet")
 	}
 
 	if !isExist(*prefix) {
