@@ -40,6 +40,7 @@ func upload(files []string) {
 					config, err := getSendConfig(info.Size())
 					if err != nil {
 						fmt.Printf("getSendConfig returns error: %v, onfile: %s", err, path)
+						return nil
 					}
 					fmt.Printf("Destination: %s\n", config.UniqueURL)
 					err = _upload(path, config)
@@ -213,7 +214,8 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 		var rBody uploadResponse
 		if err := json.Unmarshal(body, &rBody); err != nil {
 			if *debug {
-				log.Printf("failed uploading part %d error: %v (retrying)", item.count, err)
+				log.Printf("failed uploading part %d error: %v, returns: %s (retrying)",
+					item.count, string(body), err)
 			}
 			*ch <- item
 			continue
@@ -256,7 +258,7 @@ func finishUpload(config *prepareSendResp, info os.FileInfo, hashMap *cmap.Concu
 	if *debug {
 		log.Printf("merge payload: %s\n", postBody)
 	}
-	_, err := newRequest(mergeFileURL, postBody, config.UploadToken)
+	_, err := newRequest(mergeFileURL, postBody, config.UploadToken, 0)
 	if err != nil {
 		return err
 	}
@@ -265,7 +267,7 @@ func finishUpload(config *prepareSendResp, info os.FileInfo, hashMap *cmap.Concu
 		log.Println("step2 -> api/uploaded")
 	}
 	data := map[string]string{"transferGuid": config.TransferGUID, "fileId": ""}
-	_, err = newMultipartRequest(uploadFinish, data)
+	_, err = newMultipartRequest(uploadFinish, data, 0)
 	if err != nil {
 		return err
 	}
@@ -278,7 +280,7 @@ func completeUpload(config *prepareSendResp) error {
 	if *debug {
 		log.Println("step3 -> api/completeUpload")
 	}
-	_, err := newMultipartRequest(uploadComplete, data)
+	_, err := newMultipartRequest(uploadComplete, data, 0)
 	if err != nil {
 		return err
 	}
@@ -297,7 +299,7 @@ type prepareSendResp struct {
 
 func getSendConfig(totalSize int64) (*prepareSendResp, error) {
 	data := map[string]string{"totalSize": strconv.FormatInt(totalSize, 10)}
-	body, err := newMultipartRequest(prepareSend, data)
+	body, err := newMultipartRequest(prepareSend, data, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -324,14 +326,14 @@ func getUploadConfig(info os.FileInfo, config *prepareSendResp) (*prepareSendRes
 		"transferGuid":  config.TransferGUID,
 		"storagePrefix": config.Prefix,
 	}
-	_, err := newMultipartRequest(beforeUpload, data)
+	_, err := newMultipartRequest(beforeUpload, data, 0)
 	if err != nil {
 		return nil, err
 	}
 	return config, nil
 }
 
-func newRequest(link string, postBody string, upToken string) ([]byte, error) {
+func newRequest(link string, postBody string, upToken string, retry int) ([]byte, error) {
 	if *debug {
 		log.Printf("postBody: %v", postBody)
 		log.Printf("endpoint: %s", link)
@@ -342,7 +344,11 @@ func newRequest(link string, postBody string, upToken string) ([]byte, error) {
 		if *debug {
 			log.Printf("build request returns error: %v", err)
 		}
-		return nil, err
+		if retry > 3 {
+			return nil, err
+		} else {
+			return newRequest(link, postBody, upToken, retry+1)
+		}
 	}
 	req.Header.Set("referer", "https://cowtransfer.com/")
 	req.Header.Set("Authorization", "UpToken "+upToken)
@@ -354,14 +360,22 @@ func newRequest(link string, postBody string, upToken string) ([]byte, error) {
 		if *debug {
 			log.Printf("do request returns error: %v", err)
 		}
-		return nil, err
+		if retry > 3 {
+			return nil, err
+		} else {
+			return newRequest(link, postBody, upToken, retry+1)
+		}
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		if *debug {
 			log.Printf("read response returns: %v", err)
 		}
-		return nil, err
+		if retry > 3 {
+			return nil, err
+		} else {
+			return newRequest(link, postBody, upToken, retry+1)
+		}
 	}
 	_ = resp.Body.Close()
 	if *debug {
@@ -385,12 +399,13 @@ func addHeaders(req *http.Request) *http.Request {
 	return req
 }
 
-func newMultipartRequest(url string, params map[string]string) ([]byte, error) {
+func newMultipartRequest(url string, params map[string]string, retry int) ([]byte, error) {
 	if *debug {
+		log.Printf("retrying: %v", retry)
 		log.Printf("postBody: %v", params)
 		log.Printf("endpoint: %s", url)
 	}
-	client := http.Client{Timeout: 10 * time.Second}
+	client := http.Client{Timeout: time.Duration(*interval) * time.Second}
 	buf := &bytes.Buffer{}
 	writer := multipart.NewWriter(buf)
 	for key, val := range params {
@@ -402,7 +417,11 @@ func newMultipartRequest(url string, params map[string]string) ([]byte, error) {
 		if *debug {
 			log.Printf("build request returns error: %v", err)
 		}
-		return nil, err
+		if retry > 3 {
+			return nil, err
+		} else {
+			return newMultipartRequest(url, params, retry+1)
+		}
 	}
 	req.Header.Set("content-type", fmt.Sprintf("multipart/form-data;boundary=%s", writer.Boundary()))
 	req.Header.Set("referer", "https://cowtransfer.com/")
@@ -415,14 +434,22 @@ func newMultipartRequest(url string, params map[string]string) ([]byte, error) {
 		if *debug {
 			log.Printf("do request returns error: %v", err)
 		}
-		return nil, err
+		if retry > 3 {
+			return nil, err
+		} else {
+			return newMultipartRequest(url, params, retry+1)
+		}
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		if *debug {
 			log.Printf("read response returns: %v", err)
 		}
-		return nil, err
+		if retry > 3 {
+			return nil, err
+		} else {
+			return newMultipartRequest(url, params, retry+1)
+		}
 	}
 	_ = resp.Body.Close()
 	if *debug {
