@@ -6,60 +6,78 @@ Simple cowTransfer Uploader/Downloader
 
 上传/下载文件到奶牛快传的小工具，支持分块并发上传下载
 
-## usage
+## install
 
 Go语言程序, 可直接在[发布页](https://github.com/Mikubill/cowtransfer-uploader/releases)下载使用。
 
-*nix的小伙伴也可以使用这个命令：
+linux的小伙伴也可以使用这个命令来下载：
 
 ```shell
 curl -sL https://git.io/cowtransfer | sh 
 ```
 
-在可执行文件后加上想要上传的文件/想要下载的链接即可食用。
+## usage
+
+在cowtransfer-uploader后加上想要上传的文件/文件夹即可上传，可以手动修改parallels来提高上传并发数。
 
 ```shell
 # upload
-./cowtransfer balabala.mp4
+./cowtransfer-uploader balabala.mp4
+
+# upload folder
+./cowtransfer-uploader /usr
 
 # faster upload(?)
-./cowtransfer -parallel 12 balabala.mp4
-
-# debug upload
-./cowtransfer -verbose balabala.mp4
-
-# download
-./cowtransfer https://cowtransfer.com/s/c855d66abd524b
+./cowtransfer-uploader -p 12 balabala.mp4
 ```
+
+程序默认会为每一个文件生成一个链接。如果想一个链接上传所有文件，可以使用选项`-s`开启Single Upload Mode：
+
+```
+# single upload mode
+./cowtransfer-uploader -s /usr
+```
+
+在cowtransfer-uploader后加上文件分享链接即可下载，可以手动修改parallels来提高下载并发数。
+
+
+```
+# download
+./cowtransfer-uploader https://c-t.work/s/c855d66abd524b
+
+# faster download(?)
+./cowtransfer-uploader -p 8 https://c-t.work/s/c855d66abd524b
+```
+
 
 ## options
 
 ```shell
+
 Usage:
 
-  ./cowtransfer [options] file(s)/url(s)
+  ./uploader [options] file(s)/url(s)
 
 Options:
 
-  -cookie string
-    	Your User cookie (optional)
-  -parallel int
-    	parallel task count (default 4)
-  -prefix string
-    	file download prefix (default ".")
-  -timeout int
-    	request retry/timeout limit (default 30)
-  -verbose
-    	Verbose Mode
+  -c, --cookie string         Your User cookie (optional)
+  -p, --parallel int          Parallel task count (default 4)
+  -t, --timeout int           Request retry/timeout limit (in second, default 30)
+  -o, --output string         File download dictionary/name (default ".")
+  -s, --single                Single Upload Mode
+  -v, --verbose               Verbose Mode
+  --version                   Print version and exit
+
 ```
 
 Note: 
 
-* `-cookie` 可选，可以直接不带任何选项上传文件。
-* `-prefix` 指定下载文件的目录。
-* `-parallel` 上传/下载并发数，默认为4。如果觉得速度太慢也可以试试更高的值。
-* `-timeout` 上传超时时间，默认为30秒。
-* `-verbose` 开启详细日志，可以看到这个程序每一步都干了啥。
+* `-c, --cookie` 可选，可以直接不带任何选项上传文件。
+* `-o, --output` 指定下载文件的目录。（也可以使用`-prefix`指定）
+* `-p, --parallel` 上传/下载并发数，默认为4。如果觉得速度太慢也可以试试更高的值。
+* `-t, --timeout` 上传超时时间，默认为30秒。
+* `-v, --verbose` 开启详细日志，可以看到这个程序每一步都干了啥。
+* `--version` 显示当前版本号。
 
 ## 缘起
 

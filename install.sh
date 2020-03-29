@@ -28,6 +28,12 @@ case $ARCH in
   aarch64)
     ARCH='arm64'
     ;;
+  i?86|x86)
+    ARCH='386'
+    ;;
+  arm*)
+    ARCH='arm'
+    ;;
   *)
     echo 'OS type not supported'
     exit 2

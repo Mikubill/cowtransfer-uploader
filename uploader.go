@@ -12,6 +12,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,7 +29,73 @@ const (
 	block              = 4194304
 )
 
-func upload(v string) error {
+func upload(files []string) {
+	if !*single {
+		for _, v := range files {
+			err := filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
+				config, err := getSendConfig(info.Size())
+				if err != nil {
+					fmt.Printf("getSendConfig returns error: %v, onfile: %s", err, path)
+				}
+				fmt.Printf("Destination: %s\n", config.UniqueURL)
+				err = _upload(path, config)
+				if err != nil {
+					fmt.Printf("upload returns error: %v, onfile: %s", err, path)
+				}
+				err = completeUpload(config)
+				if err != nil {
+					fmt.Printf("conplete upload returns error: %v, onfile: %s", err, path)
+				}
+				return nil
+			})
+			if err != nil {
+				fmt.Printf("filepath.walk returns error: %v, onfile: %s", err, v)
+			}
+		}
+		return
+	}
+	totalSize := int64(0)
+
+	for _, v := range files {
+		if isExist(v) {
+			err := filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
+				totalSize += info.Size()
+				return nil
+			})
+			if err != nil {
+				fmt.Printf("filepath.walk returns error: %v, onfile: %s", err, v)
+			}
+		} else {
+			fmt.Printf("%s not found", v)
+		}
+	}
+
+	config, err := getSendConfig(totalSize)
+	if err != nil {
+		fmt.Printf("getSendConfig(single mode) returns error: %v", err)
+	}
+	fmt.Printf("Destination: %s\n", config.UniqueURL)
+	for _, v := range files {
+		if isExist(v) {
+			err = filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
+				err = _upload(path, config)
+				if err != nil {
+					fmt.Printf("upload returns error: %v, onfile: %s", err, path)
+				}
+				return nil
+			})
+			if err != nil {
+				fmt.Printf("filepath.walk(upload) returns error: %v, onfile: %s", err, v)
+			}
+		}
+	}
+	err = completeUpload(config)
+	if err != nil {
+		fmt.Printf("conplete upload(single mode) returns error: %v", err)
+	}
+}
+
+func _upload(v string, baseConf *prepareSendResp) error {
 	fmt.Printf("Local: %s\n", v)
 	if *debug {
 		log.Println("retrieving file info...")
@@ -38,12 +105,10 @@ func upload(v string) error {
 		return fmt.Errorf("getFileInfo returns error: %v", err)
 	}
 
-	config, err := getUploadConfig(info)
+	config, err := getUploadConfig(info, baseConf)
 	if err != nil {
 		return fmt.Errorf("getUploadConfig returns error: %v", err)
 	}
-
-	fmt.Printf("Destination: %s\n", config.UniqueURL)
 	bar := pb.Full.Start64(info.Size())
 	bar.Set(pb.Bytes, true)
 	file, err := os.Open(v)
@@ -113,7 +178,7 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 		resp, err := client.Do(req)
 		if err != nil {
 			if *debug {
-				log.Printf("failed uploading part %d error: %v (retring)", item.count, err)
+				log.Printf("failed uploading part %d error: %v (retrying)", item.count, err)
 			}
 			*ch <- item
 			continue
@@ -121,7 +186,7 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			if *debug {
-				log.Printf("failed uploading part %d error: %v (retring)", item.count, err)
+				log.Printf("failed uploading part %d error: %v (retrying)", item.count, err)
 			}
 			*ch <- item
 			continue
@@ -132,7 +197,7 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 		var rBody uploadResponse
 		if err := json.Unmarshal(body, &rBody); err != nil {
 			if *debug {
-				log.Printf("failed uploading part %d error: %v (retring)", item.count, err)
+				log.Printf("failed uploading part %d error: %v (retrying)", item.count, err)
 			}
 			*ch <- item
 			continue
@@ -189,14 +254,18 @@ func finishUpload(config *prepareSendResp, info os.FileInfo, hashMap *cmap.Concu
 		return err
 	}
 
+	return nil
+}
+
+func completeUpload(config *prepareSendResp) error {
+	data := map[string]string{"transferGuid": config.TransferGUID, "fileId": ""}
 	if *debug {
-		log.Println("step3 -> api/createVideo")
+		log.Println("step3 -> api/completeUpload")
 	}
-	_, err = newMultipartRequest(uploadComplete, data)
+	_, err := newMultipartRequest(uploadComplete, data)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -210,14 +279,8 @@ type prepareSendResp struct {
 	ErrorMessage string `json:"error_message"`
 }
 
-func getUploadConfig(info os.FileInfo) (*prepareSendResp, error) {
-
-	if *debug {
-		log.Println("retrieving upload config...")
-		log.Println("step 1/2 -> prepareSend")
-	}
-
-	data := map[string]string{"totalSize": strconv.FormatInt(info.Size(), 10)}
+func getSendConfig(totalSize int64) (*prepareSendResp, error) {
+	data := map[string]string{"totalSize": strconv.FormatInt(totalSize, 10)}
 	body, err := newMultipartRequest(prepareSend, data)
 	if err != nil {
 		return nil, err
@@ -227,11 +290,17 @@ func getUploadConfig(info os.FileInfo) (*prepareSendResp, error) {
 	if err != nil {
 		return nil, err
 	}
+	return config, nil
+}
 
-	// step 2
+func getUploadConfig(info os.FileInfo, config *prepareSendResp) (*prepareSendResp, error) {
+
 	if *debug {
+		log.Println("retrieving upload config...")
 		log.Println("step 2/2 -> beforeUpload")
 	}
+
+	data := map[string]string{"totalSize": strconv.FormatInt(info.Size(), 10)}
 	data = map[string]string{
 		"fileId":        "",
 		"type":          "",
@@ -240,7 +309,7 @@ func getUploadConfig(info os.FileInfo) (*prepareSendResp, error) {
 		"transferGuid":  config.TransferGUID,
 		"storagePrefix": config.Prefix,
 	}
-	_, err = newMultipartRequest(beforeUpload, data)
+	_, err := newMultipartRequest(beforeUpload, data)
 	if err != nil {
 		return nil, err
 	}

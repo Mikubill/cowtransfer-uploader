@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"regexp"
 	"strconv"
 	"sync"
 )
@@ -18,6 +19,8 @@ const (
 	downloadDetails = "https://cowtransfer.com/transfer/transferdetail?url=%s&treceive=undefined"
 	downloadConfig  = "https://cowtransfer.com/transfer/download?guid=%s"
 )
+
+var regex = regexp.MustCompile("[0-9a-f]{14}")
 
 type downloadDetailsResponse struct {
 	GUID         string                 `json:"guid"`
@@ -81,13 +84,6 @@ func download(v string) error {
 		return fmt.Errorf("link not finish upload yet")
 	}
 
-	if !isExist(*prefix) {
-		err = os.MkdirAll(*prefix, 00666)
-		if err != nil {
-			return fmt.Errorf("createFolder returns error: %s", err)
-		}
-	}
-
 	for _, item := range details.Details {
 		err = downloadItem(item)
 		if err != nil {
@@ -131,7 +127,16 @@ func downloadItem(item downloadDetailsBlock) error {
 	if *debug {
 		log.Println("step3 -> startDownload")
 	}
-	filePath := path.Join(*prefix, item.FileName)
+	filePath := *prefix
+
+	if isExist(*prefix) {
+		if IsFile(*prefix) {
+			filePath = *prefix
+		} else {
+			filePath = path.Join(*prefix, item.FileName)
+		}
+	}
+
 	fmt.Printf("File save to: %s\n", filePath)
 	numSize, err := strconv.ParseFloat(item.Size, 10)
 	if err != nil {
@@ -182,7 +187,7 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 	}
 	bar.SetTotal(length)
 
-	out, err := os.Create(filepath + ".tmp")
+	out, err := os.Create(filepath)
 	if err != nil {
 		return err
 	}
@@ -225,11 +230,6 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 	wg.Wait()
 
 	fmt.Print("\n")
-	err = os.Rename(filepath+".tmp", filepath)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -267,4 +267,16 @@ func isExist(path string) bool {
 		return false
 	}
 	return true
+}
+
+func IsDir(path string) bool {
+	s, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return s.IsDir()
+}
+
+func IsFile(path string) bool {
+	return !IsDir(path)
 }
