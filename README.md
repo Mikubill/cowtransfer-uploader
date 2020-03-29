@@ -10,7 +10,7 @@ Simple cowTransfer Uploader/Downloader
 
 Go语言程序, 可直接在[发布页](https://github.com/Mikubill/cowtransfer-uploader/releases)下载使用。
 
-*nix的小伙伴也可以使用这个命令：
+linux的小伙伴也可以使用这个命令来下载：
 
 ```shell
 curl -sL https://git.io/cowtransfer | sh 

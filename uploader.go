@@ -113,7 +113,7 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 		resp, err := client.Do(req)
 		if err != nil {
 			if *debug {
-				log.Printf("failed uploading part %d error: %v (retring)", item.count, err)
+				log.Printf("failed uploading part %d error: %v (retrying)", item.count, err)
 			}
 			*ch <- item
 			continue
@@ -121,7 +121,7 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			if *debug {
-				log.Printf("failed uploading part %d error: %v (retring)", item.count, err)
+				log.Printf("failed uploading part %d error: %v (retrying)", item.count, err)
 			}
 			*ch <- item
 			continue
@@ -132,7 +132,7 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 		var rBody uploadResponse
 		if err := json.Unmarshal(body, &rBody); err != nil {
 			if *debug {
-				log.Printf("failed uploading part %d error: %v (retring)", item.count, err)
+				log.Printf("failed uploading part %d error: %v (retrying)", item.count, err)
 			}
 			*ch <- item
 			continue
