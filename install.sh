@@ -8,9 +8,6 @@ case $OS in
   Linux)
     OS='linux'
     ;;
-  FreeBSD)
-    OS='freebsd'
-    ;;
   Darwin)
     OS='darwin'
     ;;

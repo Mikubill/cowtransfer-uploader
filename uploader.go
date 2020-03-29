@@ -33,6 +33,9 @@ func upload(files []string) {
 	if !*single {
 		for _, v := range files {
 			err := filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
+				if info.IsDir() {
+					return nil
+				}
 				config, err := getSendConfig(info.Size())
 				if err != nil {
 					fmt.Printf("getSendConfig returns error: %v, onfile: %s", err, path)
@@ -59,6 +62,9 @@ func upload(files []string) {
 	for _, v := range files {
 		if isExist(v) {
 			err := filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
+				if info.IsDir() {
+					return nil
+				}
 				totalSize += info.Size()
 				return nil
 			})
@@ -78,6 +84,9 @@ func upload(files []string) {
 	for _, v := range files {
 		if isExist(v) {
 			err = filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
+				if info.IsDir() {
+					return nil
+				}
 				err = _upload(path, config)
 				if err != nil {
 					fmt.Printf("upload returns error: %v, onfile: %s", err, path)
@@ -87,6 +96,8 @@ func upload(files []string) {
 			if err != nil {
 				fmt.Printf("filepath.walk(upload) returns error: %v, onfile: %s", err, v)
 			}
+		} else {
+			fmt.Printf("%s not found", v)
 		}
 	}
 	err = completeUpload(config)

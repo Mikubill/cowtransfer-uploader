@@ -1,14 +1,13 @@
 builds:
   -
     ldflags:
-      - -s -w -extldflags "-static" -X main.build={{.Version}}
+      - -s -w -extldflags "-static" -X main.build={{.FullCommit}}
 
     env:
       - CGO_ENABLED=0
 
     goos:
       - linux
-      - freebsd
       - windows
       - darwin
 

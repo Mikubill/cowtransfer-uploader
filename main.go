@@ -28,7 +28,7 @@ func init() {
 	addFlag(token, []string{"-cookie", "-c", "--cookie"}, "", "Your User cookie (optional)")
 	addFlag(parallel, []string{"-parallel", "-p", "--parallel"}, 4, "Parallel task count (default 4)")
 	addFlag(interval, []string{"-timeout", "-t", "--timeout"}, 30, "Request retry/timeout limit (in second, default 30)")
-	addFlag(prefix, []string{"-prefix", "-o", "--output"}, "", "File download dictionary/name (default \".\")")
+	addFlag(prefix, []string{"-prefix", "-o", "--output"}, ".", "File download dictionary/name (default \".\")")
 	addFlag(single, []string{"-single", "-s", "--single"}, false, "Single Upload Mode")
 	addFlag(debug, []string{"-verbose", "-v", "--verbose"}, false, "Verbose Mode")
 	addFlag(version, []string{"-version", "--version"}, false, "Print version and exit")
