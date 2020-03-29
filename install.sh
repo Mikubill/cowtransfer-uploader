@@ -3,7 +3,7 @@
 set -e
 
 hash tar uname grep curl head
-OS="`uname`"
+OS="$(uname)"
 case $OS in
   Linux)
     OS='linux'
@@ -20,7 +20,7 @@ case $OS in
     ;;
 esac
 
-ARCH="`uname -m`"
+ARCH="$(uname -m)"
 case $ARCH in
   x86_64|amd64)
     ARCH='amd64'
@@ -34,9 +34,9 @@ case $ARCH in
     ;;
 esac
 
-VERSION=$(curl -s https://api.github.com/repos/Mikubill/cowtransfer-uploader/releases/latest 2>&1 | grep -Po '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+VERSION=$(curl https://api.github.com/repos/Mikubill/cowtransfer-uploader/releases/latest 2>&1 | grep -Po '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 
-curl -sL https://github.com/Mikubill/cowtransfer-uploader/releases/download/v$VERSION/cowtransfer-uploader_$VERSION\_$OS\_$ARCH.tar.gz | tar xz
+curl -L https://github.com/Mikubill/cowtransfer-uploader/releases/download/v$VERSION/cowtransfer-uploader_$VERSION\_$OS\_$ARCH.tar.gz | tar xz
 
 printf "\nCowTransfer-uploader Downloded.\n\n"
 exit 0
