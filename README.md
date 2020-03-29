@@ -81,6 +81,16 @@ Note:
 * `-k, --keep` 在上传完毕后不立即退出，在某些情况下可能有用。
 * `--version` 显示当前版本号。
 
+## 常见问题
+
+1. 进度条卡住了/速度太慢/速度为零
+
+七牛云上传接口/cowtransfer API均有可能不稳定，如确认网络正常可使用较低的超时时间重试，即：
+
+```shell 
+./cowtransfer-uploader -t 3 file
+```
+
 ## 缘起
 
 写了acfun-uploader以后有小伙伴让我写一下cowtransfer的，感觉应该也差不多就摸了一个x
