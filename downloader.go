@@ -130,7 +130,7 @@ func downloadItem(item downloadDetailsBlock) error {
 	filePath := *prefix
 
 	if isExist(*prefix) {
-		if IsFile(*prefix) {
+		if isFile(*prefix) {
 			filePath = *prefix
 		} else {
 			filePath = path.Join(*prefix, item.FileName)
@@ -269,7 +269,7 @@ func isExist(path string) bool {
 	return true
 }
 
-func IsDir(path string) bool {
+func isDir(path string) bool {
 	s, err := os.Stat(path)
 	if err != nil {
 		return false
@@ -277,6 +277,6 @@ func IsDir(path string) bool {
 	return s.IsDir()
 }
 
-func IsFile(path string) bool {
-	return !IsDir(path)
+func isFile(path string) bool {
+	return !isDir(path)
 }
