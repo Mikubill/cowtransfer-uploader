@@ -1,4 +1,4 @@
-module acfun-uploader
+module cowtransfer-uploader
 
 go 1.14
 
