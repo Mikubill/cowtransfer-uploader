@@ -316,8 +316,7 @@ func getUploadConfig(info os.FileInfo, config *prepareSendResp) (*prepareSendRes
 		log.Println("step 2/2 -> beforeUpload")
 	}
 
-	data := map[string]string{"totalSize": strconv.FormatInt(info.Size(), 10)}
-	data = map[string]string{
+	data := map[string]string{
 		"fileId":        "",
 		"type":          "",
 		"fileName":      info.Name(),
