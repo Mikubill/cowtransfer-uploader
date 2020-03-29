@@ -37,7 +37,7 @@ case $ARCH in
     ;;
 esac
 
-VERSION=$(curl https://api.github.com/repos/Mikubill/cowtransfer-uploader/releases/latest 2>&1 | grep -o "v[0-9]\.[0-9]\.[0-9]" | head -n 1)
+VERSION=$(curl https://api.github.com/repos/Mikubill/cowtransfer-uploader/releases/latest 2>&1 | grep -o "[0-9]\.[0-9]\.[0-9]" | head -n 1)
 
 curl -L https://github.com/Mikubill/cowtransfer-uploader/releases/download/v$VERSION/cowtransfer-uploader_$VERSION\_$OS\_$ARCH.tar.gz | tar xz
 
