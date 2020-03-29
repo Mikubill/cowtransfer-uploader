@@ -27,5 +27,4 @@ builds:
       - arm64
 
 release:
-  -
-    prerelease: auto
+  prerelease: auto
