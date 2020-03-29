@@ -1,8 +1,17 @@
+archives:
+  -
+    files:
+      - none*
+
+    format_overrides:
+      - goos: windows
+        format: zip
+
 builds:
   -
     ldflags:
       - -s -w -extldflags "-static" -X main.build={{.FullCommit}}
-
+      -
     env:
       - CGO_ENABLED=0
 
