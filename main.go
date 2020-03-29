@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"strings"
@@ -49,25 +48,6 @@ func main() {
 		return
 	}
 
-	if *keep {
-		reader := bufio.NewReader(os.Stdin)
-		for {
-			fmt.Print("> ")
-			line, err := reader.ReadString('\n')
-			file := strings.ReplaceAll(strings.ReplaceAll(line, "\n", ""), "\\ ", " ")
-			upload([]string{strings.TrimSpace(file)})
-			if err != nil {
-				if err == io.EOF {
-					break
-				} else {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-			}
-		}
-		return
-	}
-
 	if *debug {
 		log.Printf("cookie = %s", *token)
 		log.Printf("block size = %d", block)
@@ -96,6 +76,12 @@ func main() {
 		}
 	}
 	upload(f)
+
+	if *keep {
+		fmt.Print("Press the enter key to exit...")
+		reader := bufio.NewReader(os.Stdin)
+		_, _ = reader.ReadString('\n')
+	}
 }
 
 var commands [][]string
