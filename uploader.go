@@ -338,7 +338,7 @@ func newRequest(link string, postBody string, upToken string, retry int) ([]byte
 		log.Printf("postBody: %v", postBody)
 		log.Printf("endpoint: %s", link)
 	}
-	client := http.Client{Timeout: 10 * time.Second}
+	client := http.Client{Timeout: time.Duration(*interval) * time.Second}
 	req, err := http.NewRequest("POST", link, strings.NewReader(postBody))
 	if err != nil {
 		if *debug {
