@@ -33,7 +33,7 @@ curl -sL https://git.io/cowtransfer | sh
 
 程序默认会为每一个文件生成一个链接。如果想一个链接上传所有文件，可以使用选项`-s`开启Single Upload Mode：
 
-```
+```shell
 # single upload mode
 ./cowtransfer-uploader -s /usr
 ```
@@ -41,7 +41,7 @@ curl -sL https://git.io/cowtransfer | sh
 在cowtransfer-uploader后加上文件分享链接即可下载，可以手动修改parallels来提高下载并发数。
 
 
-```
+```shell
 # download
 ./cowtransfer-uploader https://c-t.work/s/c855d66abd524b
 
@@ -56,7 +56,7 @@ curl -sL https://git.io/cowtransfer | sh
 
 Usage:
 
-  ./uploader [options] file(s)/url(s)
+  ./cowtransfer-uploader [options] file(s)/url(s)
 
 Options:
 
@@ -66,6 +66,7 @@ Options:
   -o, --output string         File download dictionary/name (default ".")
   -s, --single                Single Upload Mode
   -v, --verbose               Verbose Mode
+  -k, --keep                  Keep program active when upload finish
   --version                   Print version and exit
 
 ```
@@ -77,6 +78,7 @@ Note:
 * `-p, --parallel` 上传/下载并发数，默认为4。如果觉得速度太慢也可以试试更高的值。
 * `-t, --timeout` 上传超时时间，默认为30秒。
 * `-v, --verbose` 开启详细日志，可以看到这个程序每一步都干了啥。
+* `-k, --keep` 连续上传模式。
 * `--version` 显示当前版本号。
 
 ## 缘起

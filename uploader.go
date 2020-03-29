@@ -32,29 +32,34 @@ const (
 func upload(files []string) {
 	if !*single {
 		for _, v := range files {
-			err := filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
-				if info.IsDir() {
+			if isExist(v) {
+				err := filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
+					if info.IsDir() {
+						return nil
+					}
+					config, err := getSendConfig(info.Size())
+					if err != nil {
+						fmt.Printf("getSendConfig returns error: %v, onfile: %s", err, path)
+					}
+					fmt.Printf("Destination: %s\n", config.UniqueURL)
+					err = _upload(path, config)
+					if err != nil {
+						fmt.Printf("upload returns error: %v, onfile: %s", err, path)
+					}
+					err = completeUpload(config)
+					if err != nil {
+						fmt.Printf("conplete upload returns error: %v, onfile: %s", err, path)
+					}
 					return nil
-				}
-				config, err := getSendConfig(info.Size())
+				})
 				if err != nil {
-					fmt.Printf("getSendConfig returns error: %v, onfile: %s", err, path)
+					fmt.Printf("filepath.walk returns error: %v, onfile: %s", err, v)
 				}
-				fmt.Printf("Destination: %s\n", config.UniqueURL)
-				err = _upload(path, config)
-				if err != nil {
-					fmt.Printf("upload returns error: %v, onfile: %s", err, path)
-				}
-				err = completeUpload(config)
-				if err != nil {
-					fmt.Printf("conplete upload returns error: %v, onfile: %s", err, path)
-				}
-				return nil
-			})
-			if err != nil {
-				fmt.Printf("filepath.walk returns error: %v, onfile: %s", err, v)
+			} else {
+				fmt.Printf("%s not found\n", v)
 			}
 		}
+
 		return
 	}
 	totalSize := int64(0)
@@ -69,16 +74,16 @@ func upload(files []string) {
 				return nil
 			})
 			if err != nil {
-				fmt.Printf("filepath.walk returns error: %v, onfile: %s", err, v)
+				fmt.Printf("filepath.walk returns error: %v, onfile: %s\n", err, v)
 			}
 		} else {
-			fmt.Printf("%s not found", v)
+			fmt.Printf("%s not found\n", v)
 		}
 	}
 
 	config, err := getSendConfig(totalSize)
 	if err != nil {
-		fmt.Printf("getSendConfig(single mode) returns error: %v", err)
+		fmt.Printf("getSendConfig(single mode) returns error: %v\n", err)
 	}
 	fmt.Printf("Destination: %s\n", config.UniqueURL)
 	for _, v := range files {
@@ -89,20 +94,20 @@ func upload(files []string) {
 				}
 				err = _upload(path, config)
 				if err != nil {
-					fmt.Printf("upload returns error: %v, onfile: %s", err, path)
+					fmt.Printf("upload returns error: %v, onfile: %s\n", err, path)
 				}
 				return nil
 			})
 			if err != nil {
-				fmt.Printf("filepath.walk(upload) returns error: %v, onfile: %s", err, v)
+				fmt.Printf("filepath.walk(upload) returns error: %v, onfile: %s\n", err, v)
 			}
 		} else {
-			fmt.Printf("%s not found", v)
+			fmt.Printf("%s not found\n", v)
 		}
 	}
 	err = completeUpload(config)
 	if err != nil {
-		fmt.Printf("conplete upload(single mode) returns error: %v", err)
+		fmt.Printf("conplete upload(single mode) returns error: %v\n", err)
 	}
 }
 

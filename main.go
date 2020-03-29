@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -16,6 +18,7 @@ var (
 	debug    = new(bool)
 	single   = new(bool)
 	version  = new(bool)
+	keep     = new(bool)
 	build    string
 )
 
@@ -31,7 +34,9 @@ func init() {
 	addFlag(prefix, []string{"-prefix", "-o", "--output"}, ".", "File download dictionary/name (default \".\")")
 	addFlag(single, []string{"-single", "-s", "--single"}, false, "Single Upload Mode")
 	addFlag(debug, []string{"-verbose", "-v", "--verbose"}, false, "Verbose Mode")
+	addFlag(keep, []string{"-keep", "-k", "--keep"}, false, "Keep program active when upload finish")
 	addFlag(version, []string{"-version", "--version"}, false, "Print version and exit")
+
 	flag.Usage = printUsage
 	flag.Parse()
 }
@@ -41,6 +46,25 @@ func main() {
 
 	if *version {
 		printVersion()
+		return
+	}
+
+	if *keep {
+		reader := bufio.NewReader(os.Stdin)
+		for {
+			fmt.Print("> ")
+			line, err := reader.ReadString('\n')
+			file := strings.ReplaceAll(strings.ReplaceAll(line, "\n", ""), "\\ ", " ")
+			upload([]string{strings.TrimSpace(file)})
+			if err != nil {
+				if err == io.EOF {
+					break
+				} else {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+			}
+		}
 		return
 	}
 
