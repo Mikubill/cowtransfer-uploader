@@ -31,6 +31,13 @@ curl -sL https://git.io/cowtransfer | sh
 ./cowtransfer-uploader -p 12 balabala.mp4
 ```
 
+对于某些需要登陆的环境，可以使用cookie登陆。经测试发现只需要`remember-me`单项的内容即可，即：
+
+```shell
+# login to upload
+./cowtransfer-uploader -cookie="remember-me=...;" file
+```
+
 程序默认会为每一个文件生成一个链接。如果想一个链接上传所有文件，可以使用选项`-s`开启Single Upload Mode：
 
 ```shell
