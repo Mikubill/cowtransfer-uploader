@@ -1,0 +1,23 @@
+on: [push]
+name: test
+jobs:
+  dist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.14.x
+
+      - name: checkout
+        uses: actions/checkout@v1
+
+      - name: build
+        run: |
+          mkdir bin
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o cowtransfer-beta.exe -ldflags "-w -s -X main.build=beta" . && zip bin/cowtransfer-beta-windows-x64.zip cowtransfer-beta.exe
+          CGO_ENABLED=0 GOOS=windows GOARCH=386 go build -o cowtransfer-beta.exe -ldflags "-w -s -X main.build=beta" . && zip bin/cowtransfer-beta-windows-x86.zip cowtransfer-beta.exe
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o cowtransfer-beta -ldflags "-w -s -X main.build=beta" . && tar czf bin/cowtransfer-beta-linux-arm64.tar.gz cowtransfer-beta
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o cowtransfer-beta -ldflags "-w -s -X main.build=beta" . && tar czf bin/cowtransfer-beta-darwin-amd64.tar.gz cowtransfer-beta
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cowtransfer-beta -ldflags "-w -s -X main.build=beta" . && tar czf bin/cowtransfer-beta-linux-amd64.tar.gz cowtransfer-beta
+          chmod +x cowtransfer-beta && ./cowtransfer-beta -s bin

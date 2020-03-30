@@ -109,14 +109,11 @@ func addFlag(p interface{}, cmd []string, val interface{}, usage string) {
 		switch val.(type) {
 		case int:
 			s[1] = "int"
-			p = val.(int)
 			flag.IntVar((*int)(ptr), item[1:], val.(int), usage)
 		case string:
 			s[1] = "string"
-			p = val.(string)
 			flag.StringVar((*string)(ptr), item[1:], val.(string), usage)
 		case bool:
-			p = val.(bool)
 			flag.BoolVar((*bool)(ptr), item[1:], val.(bool), usage)
 		}
 	}
