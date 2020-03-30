@@ -18,6 +18,8 @@ var (
 	single   = new(bool)
 	version  = new(bool)
 	keep     = new(bool)
+	blockSize = new(int)
+	hashCheck = new(bool)
 	build    string
 )
 
@@ -27,9 +29,11 @@ type uploadPart struct {
 }
 
 func init() {
+	addFlag(hashCheck, []string{"-hash", "-r", "--hash"}, false, "Check Hash after block upload (might slower)")
 	addFlag(token, []string{"-cookie", "-c", "--cookie"}, "", "Your User cookie (optional)")
 	addFlag(parallel, []string{"-parallel", "-p", "--parallel"}, 4, "Parallel task count (default 4)")
-	addFlag(interval, []string{"-timeout", "-t", "--timeout"}, 30, "Request retry/timeout limit (in second, default 30)")
+	addFlag(blockSize, []string{"-block", "-b", "--block"}, 262144, "Upload Block Size (default 262144)")
+	addFlag(interval, []string{"-timeout", "-t", "--timeout"}, 10, "Request retry/timeout limit (in second, default 10)")
 	addFlag(prefix, []string{"-prefix", "-o", "--output"}, ".", "File download dictionary/name (default \".\")")
 	addFlag(single, []string{"-single", "-s", "--single"}, false, "Single Upload Mode")
 	addFlag(debug, []string{"-verbose", "-v", "--verbose"}, false, "Verbose Mode")
@@ -62,6 +66,10 @@ func main() {
 		printUsage()
 		return
 	}
+	if *blockSize > 4194304 {
+		*blockSize = 524288
+	}
+
 	var f []string
 	for _, v := range files {
 		var err error
