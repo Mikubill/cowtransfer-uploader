@@ -24,6 +24,7 @@ import (
 
 const (
 	prepareSend        = "https://cowtransfer.com/transfer/preparesend"
+	setPassword        = "https://cowtransfer.com/transfer/v2/bindpasscode"
 	beforeUpload       = "https://cowtransfer.com/transfer/beforeupload"
 	uploadInitEndpoint = "https://upload.qiniup.com/mkblk/%d"
 	uploadEndpoint = "https://upload.qiniup.com/bput/%s/%d"
@@ -34,7 +35,7 @@ const (
 )
 
 func upload(files []string) {
-	if !*single {
+	if !runConfig.singleMode {
 		for _, v := range files {
 			if isExist(v) {
 				err := filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
@@ -118,7 +119,7 @@ func upload(files []string) {
 
 func _upload(v string, baseConf *prepareSendResp) error {
 	fmt.Printf("Local: %s\n", v)
-	if *debug {
+	if runConfig.debugMode {
 		log.Println("retrieving file info...")
 	}
 	info, err := getFileInfo(v)
@@ -140,7 +141,7 @@ func _upload(v string, baseConf *prepareSendResp) error {
 	wg := new(sync.WaitGroup)
 	ch := make(chan *uploadPart)
 	hashMap := cmap.New()
-	for i := 0; i < *parallel; i++ {
+	for i := 0; i < runConfig.parallel; i++ {
 		go uploader(&ch, wg, bar, config.UploadToken, &hashMap)
 	}
 	part := int64(0)
@@ -172,15 +173,10 @@ func _upload(v string, baseConf *prepareSendResp) error {
 	return nil
 }
 
-type uploadResponse struct {
-	Ticket string `json:"ctx"`
-	Hash int `json:"crc32"`
-}
-
 func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, token string, hashMap *cmap.ConcurrentMap) {
 	for item := range *ch {
 		postURL := fmt.Sprintf(uploadInitEndpoint, len(item.content))
-		if *debug {
+		if runConfig.debugMode {
 			log.Printf("part %d start uploading, size: %d", item.count, len(item.content))
 			log.Printf("part %d posting %s", item.count, postURL)
 		}
@@ -188,7 +184,7 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 		// makeBlock
 		body, err := newRequest(postURL, nil, token, 0)
 		if err != nil {
-			if *debug {
+			if runConfig.debugMode {
 				log.Printf("failed make mkblk on part %d, error: %s (retrying)",
 					item.count, err)
 			}
@@ -197,7 +193,7 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 		}
 		var rBody uploadResponse
 		if err := json.Unmarshal(body, &rBody); err != nil {
-			if *debug {
+			if runConfig.debugMode {
 				log.Printf("failed make mkblk on part %d error: %v, returns: %s (retrying)",
 					item.count, string(body), strings.ReplaceAll(err.Error(), "\n", ""))
 			}
@@ -207,40 +203,40 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 
 		//blockPut
 		failFlag := false
-		blockCount := int(math.Ceil(float64(len(item.content)) / float64(*blockSize)))
-		if *debug {
+		blockCount := int(math.Ceil(float64(len(item.content)) / float64(runConfig.blockSize)))
+		if runConfig.debugMode {
 			log.Printf("init: part %d block %d ", item.count, blockCount)
 		}
 		ticket := rBody.Ticket
 		for i:=0; i<blockCount; i++ {
-			start := i * *blockSize
-			end := (i+1) * *blockSize
+			start := i * runConfig.blockSize
+			end := (i+1) * runConfig.blockSize
 			var buf []byte
 			if end > len(item.content) {
 				buf = item.content[start:]
 			} else {
 				buf = item.content[start:end]
 			}
-			if *debug {
+			if runConfig.debugMode {
 				log.Printf("part %d block %d [%d:%d] start upload...", item.count, i, start, end)
 			}
 			postURL = fmt.Sprintf(uploadEndpoint, ticket, start)
 			ticket, err = blockPut(postURL, buf, token, 0)
 			if err != nil {
-				if *debug {
+				if runConfig.debugMode {
 					log.Printf("part %d block %d failed. error: %s (retrying)", item.count, i, err)
 				}
 				failFlag = true
 				break
 			}
-			bar.Add(*blockSize)
+			bar.Add(runConfig.blockSize)
 		}
 		if failFlag {
 			*ch <- item
 			continue
 		}
 
-		if *debug {
+		if runConfig.debugMode {
 			log.Printf("part %d finished.", item.count)
 		}
 		hashMap.Set(strconv.FormatInt(item.count, 10), ticket)
@@ -254,7 +250,7 @@ func blockPut(postURL string, buf []byte, token string, retry int) (string, erro
 	data.Write(buf)
 	body, err := newRequest(postURL, data, token, 0)
 	if err != nil {
-		if *debug {
+		if runConfig.debugMode {
 			log.Printf("block upload failed (retrying)")
 		}
 		if retry > 3 {
@@ -265,7 +261,7 @@ func blockPut(postURL string, buf []byte, token string, retry int) (string, erro
 	}
 	var rBody uploadResponse
 	if err := json.Unmarshal(body, &rBody); err != nil {
-		if *debug {
+		if runConfig.debugMode {
 			log.Printf("block upload failed (retrying)")
 		}
 		if retry > 3 {
@@ -274,9 +270,9 @@ func blockPut(postURL string, buf []byte, token string, retry int) (string, erro
 			return blockPut(postURL, buf, token, retry+1)
 		}
 	}
-	if *hashCheck {
+	if runConfig.hashCheck {
 		if hashBlock(buf) != rBody.Hash {
-			if *debug {
+			if runConfig.debugMode {
 				log.Printf("block hashcheck failed (retrying)")
 			}
 			if retry > 3 {
@@ -301,7 +297,7 @@ func urlSafeEncode(enc string) string {
 }
 
 func finishUpload(config *prepareSendResp, info os.FileInfo, hashMap *cmap.ConcurrentMap, limit int64) error {
-	if *debug {
+	if runConfig.debugMode {
 		log.Println("finishing upload...")
 		log.Println("step1 -> api/mergeFile")
 	}
@@ -318,7 +314,7 @@ func finishUpload(config *prepareSendResp, info os.FileInfo, hashMap *cmap.Concu
 	if strings.HasSuffix(postBody, ",") {
 		postBody = postBody[:len(postBody)-1]
 	}
-	if *debug {
+	if runConfig.debugMode {
 		log.Printf("merge payload: %s\n", postBody)
 	}
 	reader := bytes.NewReader([]byte(postBody))
@@ -327,21 +323,28 @@ func finishUpload(config *prepareSendResp, info os.FileInfo, hashMap *cmap.Concu
 		return err
 	}
 
-	if *debug {
+	if runConfig.debugMode {
 		log.Println("step2 -> api/uploaded")
 	}
 	data := map[string]string{"transferGuid": config.TransferGUID, "fileId": ""}
-	_, err = newMultipartRequest(uploadFinish, data, 0)
+	body, err := newMultipartRequest(uploadFinish, data, 0)
 	if err != nil {
 		return err
 	}
-
+	var rBody finishResponse
+	if err := json.Unmarshal(body, &rBody); err != nil {
+		return fmt.Errorf("read finish resp failed: %s", err)
+	}
+	if rBody.Status != true {
+		return fmt.Errorf("finish upload failed: complete is not true")
+	}
+	fmt.Printf("Short Download Code: %s\n", rBody.TempDownloadCode)
 	return nil
 }
 
 func completeUpload(config *prepareSendResp) error {
 	data := map[string]string{"transferGuid": config.TransferGUID, "fileId": ""}
-	if *debug {
+	if runConfig.debugMode {
 		log.Println("step3 -> api/completeUpload")
 	}
 	_, err := newMultipartRequest(uploadComplete, data, 0)
@@ -351,18 +354,10 @@ func completeUpload(config *prepareSendResp) error {
 	return nil
 }
 
-type prepareSendResp struct {
-	UploadToken  string `json:"uptoken"`
-	TransferGUID string `json:"transferguid"`
-	UniqueURL    string `json:"uniqueurl"`
-	Prefix       string `json:"prefix"`
-	QRCode       string `json:"qrcode"`
-	Error        bool   `json:"error"`
-	ErrorMessage string `json:"error_message"`
-}
-
 func getSendConfig(totalSize int64) (*prepareSendResp, error) {
-	data := map[string]string{"totalSize": strconv.FormatInt(totalSize, 10)}
+	data := map[string]string{
+		"totalSize": strconv.FormatInt(totalSize, 10),
+	}
 	body, err := newMultipartRequest(prepareSend, data, 0)
 	if err != nil {
 		return nil, err
@@ -372,12 +367,29 @@ func getSendConfig(totalSize int64) (*prepareSendResp, error) {
 	if err != nil {
 		return nil, err
 	}
+	if config.Error != false {
+		return nil, fmt.Errorf(config.ErrorMessage)
+	}
+	if runConfig.passCode != "" {
+		// set password
+		data := map[string]string{
+			"transferguid": config.TransferGUID,
+			"passcode": runConfig.passCode,
+		}
+		body, err = newMultipartRequest(setPassword, data, 0)
+		if err != nil {
+			return nil, err
+		}
+		if string(body) != "true" {
+			return nil, fmt.Errorf("set password unsuccessful")
+		}
+	}
 	return config, nil
 }
 
 func getUploadConfig(info os.FileInfo, config *prepareSendResp) (*prepareSendResp, error) {
 
-	if *debug {
+	if runConfig.debugMode {
 		log.Println("retrieving upload config...")
 		log.Println("step 2/2 -> beforeUpload")
 	}
@@ -398,13 +410,13 @@ func getUploadConfig(info os.FileInfo, config *prepareSendResp) (*prepareSendRes
 }
 
 func newRequest(link string, postBody io.Reader, upToken string, retry int) ([]byte, error) {
-	if *debug {
+	if runConfig.debugMode {
 		log.Printf("endpoint: %s", link)
 	}
-	client := http.Client{Timeout: time.Duration(*interval) * time.Second}
+	client := http.Client{Timeout: time.Duration(runConfig.interval) * time.Second}
 	req, err := http.NewRequest("POST", link, postBody)
 	if err != nil {
-		if *debug {
+		if runConfig.debugMode {
 			log.Printf("build request returns error: %v", err)
 		}
 		if retry > 3 {
@@ -415,12 +427,12 @@ func newRequest(link string, postBody io.Reader, upToken string, retry int) ([]b
 	}
 	req.Header.Set("referer", "https://cowtransfer.com/")
 	req.Header.Set("Authorization", "UpToken "+upToken)
-	if *debug {
+	if runConfig.debugMode {
 		log.Println(req.Header)
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		if *debug {
+		if runConfig.debugMode {
 			log.Printf("do request returns error: %v", err)
 		}
 		if retry > 3 {
@@ -431,7 +443,7 @@ func newRequest(link string, postBody io.Reader, upToken string, retry int) ([]b
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		if *debug {
+		if runConfig.debugMode {
 			log.Printf("read response returns: %v", err)
 		}
 		if retry > 3 {
@@ -441,7 +453,7 @@ func newRequest(link string, postBody io.Reader, upToken string, retry int) ([]b
 		}
 	}
 	_ = resp.Body.Close()
-	if *debug {
+	if runConfig.debugMode {
 		if len(body) < 1024{
 			log.Printf("returns: %v", string(body))
 		}
@@ -465,12 +477,12 @@ func addHeaders(req *http.Request) *http.Request {
 }
 
 func newMultipartRequest(url string, params map[string]string, retry int) ([]byte, error) {
-	if *debug {
+	if runConfig.debugMode {
 		log.Printf("retrying: %v", retry)
 		log.Printf("postBody: %v", params)
 		log.Printf("endpoint: %s", url)
 	}
-	client := http.Client{Timeout: time.Duration(*interval) * time.Second}
+	client := http.Client{Timeout: time.Duration(runConfig.interval) * time.Second}
 	buf := &bytes.Buffer{}
 	writer := multipart.NewWriter(buf)
 	for key, val := range params {
@@ -479,7 +491,7 @@ func newMultipartRequest(url string, params map[string]string, retry int) ([]byt
 	_ = writer.Close()
 	req, err := http.NewRequest("POST", url, buf)
 	if err != nil {
-		if *debug {
+		if runConfig.debugMode {
 			log.Printf("build request returns error: %v", err)
 		}
 		if retry > 3 {
@@ -490,13 +502,13 @@ func newMultipartRequest(url string, params map[string]string, retry int) ([]byt
 	}
 	req.Header.Set("content-type", fmt.Sprintf("multipart/form-data;boundary=%s", writer.Boundary()))
 	req.Header.Set("referer", "https://cowtransfer.com/")
-	req.Header.Set("cookie", *token)
-	if *debug {
+	req.Header.Set("cookie", runConfig.token)
+	if runConfig.debugMode {
 		log.Println(req.Header)
 	}
 	resp, err := client.Do(addHeaders(req))
 	if err != nil {
-		if *debug {
+		if runConfig.debugMode {
 			log.Printf("do request returns error: %v", err)
 		}
 		if retry > 3 {
@@ -507,7 +519,7 @@ func newMultipartRequest(url string, params map[string]string, retry int) ([]byt
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		if *debug {
+		if runConfig.debugMode {
 			log.Printf("read response returns: %v", err)
 		}
 		if retry > 3 {
@@ -517,16 +529,16 @@ func newMultipartRequest(url string, params map[string]string, retry int) ([]byt
 		}
 	}
 	_ = resp.Body.Close()
-	if *debug {
+	if runConfig.debugMode {
 		log.Printf("returns: %v", string(body))
 	}
-	if s := resp.Header.Values("Set-Cookie"); len(s) != 0 && *token == "" {
+	if s := resp.Header.Values("Set-Cookie"); len(s) != 0 && runConfig.token == "" {
 		for _, v := range s {
 			ck := strings.Split(v, ";")
-			*token += ck[0] + ";"
+			runConfig.token += ck[0] + ";"
 		}
-		if *debug {
-			log.Printf("cookies set to: %v", *token)
+		if runConfig.debugMode {
+			log.Printf("cookies set to: %v", runConfig.token)
 		}
 	}
 

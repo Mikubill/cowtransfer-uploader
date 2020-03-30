@@ -6,21 +6,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"strings"
+	"unsafe"
 )
 
 var (
-	token    = new(string)
-	parallel = new(int)
-	interval = new(int)
-	prefix   = new(string)
-	debug    = new(bool)
-	single   = new(bool)
-	version  = new(bool)
-	keep     = new(bool)
-	blockSize = new(int)
-	hashCheck = new(bool)
+	runConfig = new(mainConfig)
 	build    string
+	commands [][]string
 )
 
 type uploadPart struct {
@@ -29,16 +23,17 @@ type uploadPart struct {
 }
 
 func init() {
-	addFlag(hashCheck, []string{"-hash", "-r", "--hash"}, false, "Check Hash after block upload (might slower)")
-	addFlag(token, []string{"-cookie", "-c", "--cookie"}, "", "Your User cookie (optional)")
-	addFlag(parallel, []string{"-parallel", "-p", "--parallel"}, 4, "Parallel task count (default 4)")
-	addFlag(blockSize, []string{"-block", "-b", "--block"}, 262144, "Upload Block Size (default 262144)")
-	addFlag(interval, []string{"-timeout", "-t", "--timeout"}, 10, "Request retry/timeout limit (in second, default 10)")
-	addFlag(prefix, []string{"-prefix", "-o", "--output"}, ".", "File download dictionary/name (default \".\")")
-	addFlag(single, []string{"-single", "-s", "--single"}, false, "Single Upload Mode")
-	addFlag(debug, []string{"-verbose", "-v", "--verbose"}, false, "Verbose Mode")
-	addFlag(keep, []string{"-keep", "-k", "--keep"}, false, "Keep program active when upload finish")
-	addFlag(version, []string{"-version", "--version"}, false, "Print version and exit")
+	addFlag(&runConfig.token, []string{"-cookie", "-c", "--cookie"}, "", "Your User cookie (optional)")
+	addFlag(&runConfig.parallel, []string{"-parallel", "-p", "--parallel"}, 4, "Parallel task count (default 4)")
+	addFlag(&runConfig.blockSize, []string{"-block", "-b", "--block"}, 262144, "Upload Block Size (default 262144)")
+	addFlag(&runConfig.interval, []string{"-timeout", "-t", "--timeout"}, 10, "Request retry/timeout limit (in second, default 10)")
+	addFlag(&runConfig.prefix, []string{"-prefix", "-o", "--output"}, ".", "File download dictionary/name (default \".\")")
+	addFlag(&runConfig.singleMode, []string{"-single", "-s", "--single"}, false, "Single Upload Mode")
+	addFlag(&runConfig.debugMode, []string{"-verbose", "-v", "--verbose"}, false, "Verbose Mode")
+	addFlag(&runConfig.keepMode, []string{"-keep", "-k", "--keep"}, false, "Keep program active when upload finish")
+	addFlag(&runConfig.hashCheck, []string{"-hash", "--hash"}, false, "Check Hash after block upload (might slower)")
+	addFlag(&runConfig.passCode, []string{"-password", "--password"}, "", "Set password")
+	addFlag(&runConfig.version, []string{"-version", "--version"}, false, "Print version and exit")
 
 	flag.Usage = printUsage
 	flag.Parse()
@@ -47,18 +42,13 @@ func init() {
 func main() {
 	files := flag.Args()
 
-	if *version {
+	if runConfig.version {
 		printVersion()
 		return
 	}
 
-	if *debug {
-		log.Printf("cookie = %s", *token)
-		log.Printf("block size = %d", block)
-		log.Printf("verbose = true")
-		log.Printf("single = %v", *single)
-		log.Printf("timeout = %d", *interval)
-		log.Printf("parallel = %d", *parallel)
+	if runConfig.debugMode {
+		log.Printf("config = %+v", runConfig)
 		log.Printf("files = %s", files)
 	}
 	if len(files) == 0 {
@@ -66,8 +56,8 @@ func main() {
 		printUsage()
 		return
 	}
-	if *blockSize > 4194304 {
-		*blockSize = 524288
+	if runConfig.blockSize > 4194304 {
+		runConfig.blockSize = 524288
 	}
 
 	var f []string
@@ -85,14 +75,12 @@ func main() {
 	}
 	upload(f)
 
-	if *keep {
+	if runConfig.keepMode {
 		fmt.Print("Press the enter key to exit...")
 		reader := bufio.NewReader(os.Stdin)
 		_, _ = reader.ReadString('\n')
 	}
 }
-
-var commands [][]string
 
 func printUsage() {
 	fmt.Printf("\nUsage:\n\n  %s [options] file(s)/url(s)\n\n", os.Args[0])
@@ -114,19 +102,20 @@ func printVersion() {
 
 func addFlag(p interface{}, cmd []string, val interface{}, usage string) {
 	s := []string{strings.Join(cmd[1:], ", "), "", usage}
+	ptr := unsafe.Pointer(reflect.ValueOf(p).Pointer())
 	for _, item := range cmd {
-		switch p.(type) {
-		case *int:
+		switch val.(type) {
+		case int:
 			s[1] = "int"
-			*p.(*int) = val.(int)
-			flag.IntVar(p.(*int), item[1:], val.(int), usage)
-		case *string:
+			p = val.(int)
+			flag.IntVar((*int)(ptr), item[1:], val.(int), usage)
+		case string:
 			s[1] = "string"
-			*p.(*string) = val.(string)
-			flag.StringVar(p.(*string), item[1:], val.(string), usage)
-		case *bool:
-			*p.(*bool) = val.(bool)
-			flag.BoolVar(p.(*bool), item[1:], val.(bool), usage)
+			p = val.(string)
+			flag.StringVar((*string)(ptr), item[1:], val.(string), usage)
+		case bool:
+			p = val.(bool)
+			flag.BoolVar((*bool)(ptr), item[1:], val.(bool), usage)
 		}
 	}
 	commands = append(commands, s)

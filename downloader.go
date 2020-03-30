@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	downloadDetails = "https://cowtransfer.com/transfer/transferdetail?url=%s&treceive=undefined"
+	downloadDetails = "https://cowtransfer.com/transfer/transferdetail?url=%s&treceive=undefined&passcode=%s"
 	downloadConfig  = "https://cowtransfer.com/transfer/download?guid=%s"
 )
 
@@ -46,12 +46,12 @@ func download(v string) error {
 		return fmt.Errorf("unknown URL format")
 	}
 
-	if *debug {
+	if runConfig.debugMode {
 		log.Println("starting download...")
 		log.Println("step1 -> api/getGuid")
 	}
 	fmt.Printf("Remote: %s\n", v)
-	detailsURL := fmt.Sprintf(downloadDetails, fileID)
+	detailsURL := fmt.Sprintf(downloadDetails, fileID, runConfig.passCode)
 	resp, err := http.Get(detailsURL)
 	if err != nil {
 		return fmt.Errorf("getDownloadDetails returns error: %s", err)
@@ -64,7 +64,7 @@ func download(v string) error {
 
 	_ = resp.Body.Close()
 
-	if *debug {
+	if runConfig.debugMode {
 		log.Printf("returns: %v\n", string(body))
 	}
 	details := new(downloadDetailsResponse)
@@ -94,7 +94,7 @@ func download(v string) error {
 }
 
 func downloadItem(item downloadDetailsBlock) error {
-	if *debug {
+	if runConfig.debugMode {
 		log.Println("step2 -> api/getConf")
 		log.Printf("fileName: %s\n", item.FileName)
 		log.Printf("fileSize: %s\n", item.Size)
@@ -116,7 +116,7 @@ func downloadItem(item downloadDetailsBlock) error {
 	}
 
 	_ = resp.Body.Close()
-	if *debug {
+	if runConfig.debugMode {
 		log.Printf("returns: %v\n", string(body))
 	}
 	config := new(downloadConfigResponse)
@@ -124,16 +124,16 @@ func downloadItem(item downloadDetailsBlock) error {
 		return fmt.Errorf("unmatshal DownloadConfig returns error: %s, onfile: %s", err, item.FileName)
 	}
 
-	if *debug {
+	if runConfig.debugMode {
 		log.Println("step3 -> startDownload")
 	}
-	filePath := *prefix
+	filePath := runConfig.prefix
 
-	if isExist(*prefix) {
-		if isFile(*prefix) {
-			filePath = *prefix
+	if isExist(runConfig.prefix) {
+		if isFile(runConfig.prefix) {
+			filePath = runConfig.prefix
 		} else {
-			filePath = path.Join(*prefix, item.FileName)
+			filePath = path.Join(runConfig.prefix, item.FileName)
 		}
 	}
 
@@ -201,14 +201,14 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 	if err := out.Truncate(length); err != nil {
 		return fmt.Errorf("tmpfile fruncate failed: %s", err)
 	}
-	if length > 10*1024*1024 && resp.Header.Get("Accept-Ranges") != "" && *parallel > 1 {
-		_parallel = *parallel
+	if length > 10*1024*1024 && resp.Header.Get("Accept-Ranges") != "" && runConfig.parallel > 1 {
+		_parallel = runConfig.parallel
 	}
 
 	wg := new(sync.WaitGroup)
 	blk := length / int64(_parallel)
 
-	if *debug {
+	if runConfig.debugMode {
 		log.Printf("filesize = %d", length)
 		log.Printf("parallel = %d", _parallel)
 		log.Printf("block = %d", blk)
@@ -221,7 +221,7 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 		if end >= length {
 			ranger = fmt.Sprintf("%d-%d", start, length)
 		}
-		if *debug {
+		if runConfig.debugMode {
 			log.Printf("range = %s", ranger)
 		}
 		counter := &writeCounter{bar: bar, offset: start, writer: out}
