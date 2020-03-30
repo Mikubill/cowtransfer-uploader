@@ -13,8 +13,8 @@ import (
 
 var (
 	runConfig = new(mainConfig)
-	build    string
-	commands [][]string
+	build     string
+	commands  [][]string
 )
 
 type uploadPart struct {
@@ -73,7 +73,9 @@ func main() {
 			fmt.Printf("Error: %v", err)
 		}
 	}
-	upload(f)
+	if len(f) != 0 {
+		upload(f)
+	}
 
 	if runConfig.keepMode {
 		fmt.Print("Press the enter key to exit...")

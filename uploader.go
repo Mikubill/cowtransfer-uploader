@@ -27,7 +27,7 @@ const (
 	setPassword        = "https://cowtransfer.com/transfer/v2/bindpasscode"
 	beforeUpload       = "https://cowtransfer.com/transfer/beforeupload"
 	uploadInitEndpoint = "https://upload.qiniup.com/mkblk/%d"
-	uploadEndpoint = "https://upload.qiniup.com/bput/%s/%d"
+	uploadEndpoint     = "https://upload.qiniup.com/bput/%s/%d"
 	uploadFinish       = "https://cowtransfer.com/transfer/uploaded"
 	uploadComplete     = "https://cowtransfer.com/transfer/complete"
 	uploadMergeFile    = "https://upload.qiniup.com/mkfile/%s/key/%s/fname/%s"
@@ -54,7 +54,7 @@ func upload(files []string) {
 					}
 					err = completeUpload(config)
 					if err != nil {
-						fmt.Printf("conplete upload returns error: %v, onfile: %s", err, path)
+						fmt.Printf("complete upload returns error: %v, onfile: %s", err, path)
 					}
 					return nil
 				})
@@ -113,7 +113,7 @@ func upload(files []string) {
 	}
 	err = completeUpload(config)
 	if err != nil {
-		fmt.Printf("conplete upload(single mode) returns error: %v\n", err)
+		fmt.Printf("complete upload(single mode) returns error: %v\n", err)
 	}
 }
 
@@ -208,9 +208,9 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 			log.Printf("init: part %d block %d ", item.count, blockCount)
 		}
 		ticket := rBody.Ticket
-		for i:=0; i<blockCount; i++ {
+		for i := 0; i < blockCount; i++ {
 			start := i * runConfig.blockSize
-			end := (i+1) * runConfig.blockSize
+			end := (i + 1) * runConfig.blockSize
 			var buf []byte
 			if end > len(item.content) {
 				buf = item.content[start:]
@@ -377,7 +377,7 @@ func getSendConfig(totalSize int64) (*prepareSendResp, error) {
 		// set password
 		data := map[string]string{
 			"transferguid": config.TransferGUID,
-			"passcode": runConfig.passCode,
+			"passcode":     runConfig.passCode,
 		}
 		body, err = newMultipartRequest(setPassword, data, 0)
 		if err != nil {
@@ -457,7 +457,7 @@ func newRequest(link string, postBody io.Reader, upToken string, retry int) ([]b
 	}
 	_ = resp.Body.Close()
 	if runConfig.debugMode {
-		if len(body) < 1024{
+		if len(body) < 1024 {
 			log.Printf("returns: %v", string(body))
 		}
 	}

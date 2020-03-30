@@ -49,6 +49,20 @@ curl -sL https://git.io/cowtransfer | sh
 ./cowtransfer-uploader -p 8 https://c-t.work/s/c855d66abd524b
 ```
 
+程序默认不对数据进行校验（一般情况下也不会出错），如需要确保上传完整性可以使用选项`--hash`启用校验功能：
+
+```shell
+# hash
+./cowtransfer-uploader --hash file
+```
+
+如需要添加密码可以使用选项`--password`设置想要的下载密码：
+
+```shell
+# password
+./cowtransfer-uploader --password=123456 file
+```
+
 
 ## options
 
@@ -62,11 +76,14 @@ Options:
 
   -c, --cookie string         Your User cookie (optional)
   -p, --parallel int          Parallel task count (default 4)
-  -t, --timeout int           Request retry/timeout limit (in second, default 30)
+  -b, --block int             Upload Block Size (default 262144)
+  -t, --timeout int           Request retry/timeout limit (in second, default 10)
   -o, --output string         File download dictionary/name (default ".")
   -s, --single                Single Upload Mode
   -v, --verbose               Verbose Mode
   -k, --keep                  Keep program active when upload finish
+  --hash                      Check Hash after block upload (might slower)
+  --password string           Set password
   --version                   Print version and exit
 
 ```
@@ -79,7 +96,9 @@ Note:
 * `-t, --timeout` 上传超时时间，默认为30秒。
 * `-v, --verbose` 开启详细日志，可以看到这个程序每一步都干了啥。
 * `-k, --keep` 在上传完毕后不立即退出，在某些情况下可能有用。
-* `--version` 显示当前版本号。
+* `--hash` 上传分块校验，开启后会对每一个分块进行上传校验以确保上传完整性。
+* `--password` 上传/下载密码设置。
+* `--version` 显示程序版本信息。
 
 ## 常见问题
 

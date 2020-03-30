@@ -1,17 +1,17 @@
 package main
 
 type mainConfig struct {
-	token string
-	parallel int
-	interval int
-	prefix string
-	debugMode bool
+	token      string
+	parallel   int
+	interval   int
+	prefix     string
+	debugMode  bool
 	singleMode bool
-	version bool
-	keepMode bool
-	blockSize int
-	hashCheck bool
-	passCode string
+	version    bool
+	keepMode   bool
+	blockSize  int
+	hashCheck  bool
+	passCode   string
 }
 
 type prepareSendResp struct {
@@ -26,10 +26,10 @@ type prepareSendResp struct {
 
 type uploadResponse struct {
 	Ticket string `json:"ctx"`
-	Hash int `json:"crc32"`
+	Hash   int    `json:"crc32"`
 }
 
 type finishResponse struct {
 	TempDownloadCode string `json:"tempDownloadCode"`
-	Status bool `json:"complete"`
+	Status           bool   `json:"complete"`
 }
