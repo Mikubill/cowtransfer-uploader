@@ -229,7 +229,7 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 				failFlag = true
 				break
 			}
-			bar.Add(runConfig.blockSize)
+			bar.Add(len(buf))
 		}
 		if failFlag {
 			*ch <- item
@@ -255,9 +255,8 @@ func blockPut(postURL string, buf []byte, token string, retry int) (string, erro
 		}
 		if retry > 3 {
 			return "", err
-		} else {
-			return blockPut(postURL, buf, token, retry+1)
 		}
+		return blockPut(postURL, buf, token, retry+1)
 	}
 	var rBody uploadResponse
 	if err := json.Unmarshal(body, &rBody); err != nil {
@@ -266,9 +265,8 @@ func blockPut(postURL string, buf []byte, token string, retry int) (string, erro
 		}
 		if retry > 3 {
 			return "", err
-		} else {
-			return blockPut(postURL, buf, token, retry+1)
 		}
+		return blockPut(postURL, buf, token, retry+1)
 	}
 	if runConfig.hashCheck {
 		if hashBlock(buf) != rBody.Hash {
@@ -277,9 +275,8 @@ func blockPut(postURL string, buf []byte, token string, retry int) (string, erro
 			}
 			if retry > 3 {
 				return "", err
-			} else {
-				return blockPut(postURL, buf, token, retry+1)
 			}
+			return blockPut(postURL, buf, token, retry+1)
 		}
 	}
 	return rBody.Ticket, nil
@@ -424,9 +421,8 @@ func newRequest(link string, postBody io.Reader, upToken string, retry int) ([]b
 		}
 		if retry > 3 {
 			return nil, err
-		} else {
-			return newRequest(link, postBody, upToken, retry+1)
 		}
+		return newRequest(link, postBody, upToken, retry+1)
 	}
 	req.Header.Set("referer", "https://cowtransfer.com/")
 	req.Header.Set("Authorization", "UpToken "+upToken)
@@ -440,9 +436,8 @@ func newRequest(link string, postBody io.Reader, upToken string, retry int) ([]b
 		}
 		if retry > 3 {
 			return nil, err
-		} else {
-			return newRequest(link, postBody, upToken, retry+1)
 		}
+		return newRequest(link, postBody, upToken, retry+1)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -451,9 +446,8 @@ func newRequest(link string, postBody io.Reader, upToken string, retry int) ([]b
 		}
 		if retry > 3 {
 			return nil, err
-		} else {
-			return newRequest(link, postBody, upToken, retry+1)
 		}
+		return newRequest(link, postBody, upToken, retry+1)
 	}
 	_ = resp.Body.Close()
 	if runConfig.debugMode {
@@ -499,9 +493,8 @@ func newMultipartRequest(url string, params map[string]string, retry int) ([]byt
 		}
 		if retry > 3 {
 			return nil, err
-		} else {
-			return newMultipartRequest(url, params, retry+1)
 		}
+		return newMultipartRequest(url, params, retry+1)
 	}
 	req.Header.Set("content-type", fmt.Sprintf("multipart/form-data;boundary=%s", writer.Boundary()))
 	req.Header.Set("referer", "https://cowtransfer.com/")
@@ -516,9 +509,8 @@ func newMultipartRequest(url string, params map[string]string, retry int) ([]byt
 		}
 		if retry > 3 {
 			return nil, err
-		} else {
-			return newMultipartRequest(url, params, retry+1)
 		}
+		return newMultipartRequest(url, params, retry+1)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -527,9 +519,8 @@ func newMultipartRequest(url string, params map[string]string, retry int) ([]byt
 		}
 		if retry > 3 {
 			return nil, err
-		} else {
-			return newMultipartRequest(url, params, retry+1)
 		}
+		return newMultipartRequest(url, params, retry+1)
 	}
 	_ = resp.Body.Close()
 	if runConfig.debugMode {
