@@ -331,14 +331,9 @@ func finishUpload(config *prepareSendResp, info os.FileInfo, hashMap *cmap.Concu
 	if err != nil {
 		return err
 	}
-	var rBody finishResponse
-	if err := json.Unmarshal(body, &rBody); err != nil {
-		return fmt.Errorf("read finish resp failed: %s", err)
+	if string(body) != "true" {
+		return fmt.Errorf("finish upload failed: status != true")
 	}
-	if rBody.Status != true {
-		return fmt.Errorf("finish upload failed: complete is not true")
-	}
-	fmt.Printf("Short Download Code: %s\n", rBody.TempDownloadCode)
 	return nil
 }
 
@@ -347,10 +342,18 @@ func completeUpload(config *prepareSendResp) error {
 	if runConfig.debugMode {
 		log.Println("step3 -> api/completeUpload")
 	}
-	_, err := newMultipartRequest(uploadComplete, data, 0)
+	body, err := newMultipartRequest(uploadComplete, data, 0)
 	if err != nil {
 		return err
 	}
+	var rBody finishResponse
+	if err := json.Unmarshal(body, &rBody); err != nil {
+		return fmt.Errorf("read finish resp failed: %s", err)
+	}
+	if rBody.Status != true {
+		return fmt.Errorf("finish upload failed: complete is not true")
+	}
+	fmt.Printf("Short Download Code: %s\n", rBody.TempDownloadCode)
 	return nil
 }
 
