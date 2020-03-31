@@ -106,15 +106,15 @@ func addFlag(p interface{}, cmd []string, val interface{}, usage string) {
 	s := []string{strings.Join(cmd[1:], ", "), "", usage}
 	ptr := unsafe.Pointer(reflect.ValueOf(p).Pointer())
 	for _, item := range cmd {
-		switch val.(type) {
+		switch val := val.(type) {
 		case int:
 			s[1] = "int"
-			flag.IntVar((*int)(ptr), item[1:], val.(int), usage)
+			flag.IntVar((*int)(ptr), item[1:], val, usage)
 		case string:
 			s[1] = "string"
-			flag.StringVar((*string)(ptr), item[1:], val.(string), usage)
+			flag.StringVar((*string)(ptr), item[1:], val, usage)
 		case bool:
-			flag.BoolVar((*bool)(ptr), item[1:], val.(bool), usage)
+			flag.BoolVar((*bool)(ptr), item[1:], val, usage)
 		}
 	}
 	commands = append(commands, s)

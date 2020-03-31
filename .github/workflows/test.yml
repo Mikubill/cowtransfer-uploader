@@ -20,4 +20,4 @@ jobs:
           CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o cowtransfer-beta -ldflags "-w -s -X main.build=beta" . && tar czf bin/cowtransfer-beta-linux-arm64.tar.gz cowtransfer-beta
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o cowtransfer-beta -ldflags "-w -s -X main.build=beta" . && tar czf bin/cowtransfer-beta-darwin-amd64.tar.gz cowtransfer-beta
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cowtransfer-beta -ldflags "-w -s -X main.build=beta" . && tar czf bin/cowtransfer-beta-linux-amd64.tar.gz cowtransfer-beta
-          chmod +x cowtransfer-beta && ./cowtransfer-beta -s bin
+          chmod +x cowtransfer-beta && ./cowtransfer-beta cowtransfer-beta

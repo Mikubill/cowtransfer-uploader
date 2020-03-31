@@ -39,6 +39,10 @@ func upload(files []string) {
 		for _, v := range files {
 			if isExist(v) {
 				err := filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						fmt.Printf("filapath walker returns error: %v, onfile: %s", err, path)
+						return nil
+					}
 					if info.IsDir() {
 						return nil
 					}
@@ -95,6 +99,10 @@ func upload(files []string) {
 	for _, v := range files {
 		if isExist(v) {
 			err = filepath.Walk(v, func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					fmt.Printf("filapath walker returns error: %v, onfile: %s", err, path)
+					return nil
+				}
 				if info.IsDir() {
 					return nil
 				}
@@ -347,7 +355,7 @@ func completeUpload(config *prepareSendResp) error {
 	if err := json.Unmarshal(body, &rBody); err != nil {
 		return fmt.Errorf("read finish resp failed: %s", err)
 	}
-	if rBody.Status != true {
+	if !rBody.Status {
 		return fmt.Errorf("finish upload failed: complete is not true")
 	}
 	fmt.Printf("Short Download Code: %s\n", rBody.TempDownloadCode)
@@ -367,7 +375,7 @@ func getSendConfig(totalSize int64) (*prepareSendResp, error) {
 	if err != nil {
 		return nil, err
 	}
-	if config.Error != false {
+	if config.Error {
 		return nil, fmt.Errorf(config.ErrorMessage)
 	}
 	if runConfig.passCode != "" {
