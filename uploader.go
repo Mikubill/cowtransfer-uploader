@@ -307,7 +307,8 @@ func finishUpload(config *prepareSendResp, info os.FileInfo, hashMap *cmap.Concu
 		log.Println("step1 -> api/mergeFile")
 	}
 	filename := urlSafeEncode(info.Name())
-	fileLocate := urlSafeEncode(fmt.Sprintf("anonymous/%s/%s", config.TransferGUID, info.Name()))
+	var fileLocate string
+	fileLocate = urlSafeEncode(fmt.Sprintf("%s/%s/%s", config.Prefix, config.TransferGUID, info.Name()))
 	mergeFileURL := fmt.Sprintf(uploadMergeFile, strconv.FormatInt(info.Size(), 10), fileLocate, filename)
 	postBody := ""
 	for i := int64(1); i <= limit; i++ {

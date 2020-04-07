@@ -213,7 +213,7 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 		log.Printf("parallel = %d", _parallel)
 		log.Printf("block = %d", blk)
 	}
-	for i := 0; i <= _parallel; i++ {
+	for i := 0; i < _parallel; i++ {
 		wg.Add(1)
 		start := int64(i) * blk
 		end := start + blk
