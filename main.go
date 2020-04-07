@@ -34,6 +34,7 @@ func init() {
 	addFlag(&runConfig.hashCheck, []string{"-hash", "--hash"}, false, "Check Hash after block upload (might slower)")
 	addFlag(&runConfig.passCode, []string{"-password", "--password"}, "", "Set password")
 	addFlag(&runConfig.version, []string{"-version", "--version"}, false, "Print version and exit")
+	addFlag(&runConfig.silentMode, []string{"-silent", "--silent"}, false, "Enable silent mode")
 
 	flag.Usage = printUsage
 	flag.Parse()

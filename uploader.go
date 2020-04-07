@@ -139,8 +139,11 @@ func _upload(v string, baseConf *prepareSendResp) error {
 	if err != nil {
 		return fmt.Errorf("getUploadConfig returns error: %v", err)
 	}
-	bar := pb.Full.Start64(info.Size())
-	bar.Set(pb.Bytes, true)
+	var bar *pb.ProgressBar
+	if !runConfig.silentMode {
+		bar = pb.Full.Start64(info.Size())
+		bar.Set(pb.Bytes, true)
+	}
 	file, err := os.Open(v)
 	if err != nil {
 		return fmt.Errorf("openFile returns error: %v", err)
@@ -172,7 +175,9 @@ func _upload(v string, baseConf *prepareSendResp) error {
 	wg.Wait()
 	close(ch)
 	_ = file.Close()
-	bar.Finish()
+	if !runConfig.silentMode && bar != nil{
+		bar.Finish()
+	}
 	// finish upload
 	err = finishUpload(config, info, &hashMap, part)
 	if err != nil {
@@ -237,7 +242,9 @@ func uploader(ch *chan *uploadPart, wg *sync.WaitGroup, bar *pb.ProgressBar, tok
 				failFlag = true
 				break
 			}
-			bar.Add(len(buf))
+			if !runConfig.silentMode && bar != nil {
+				bar.Add(len(buf))
+			}
 		}
 		if failFlag {
 			*ch <- item

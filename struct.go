@@ -12,6 +12,7 @@ type mainConfig struct {
 	blockSize  int
 	hashCheck  bool
 	passCode   string
+	silentMode bool
 }
 
 type prepareSendResp struct {
