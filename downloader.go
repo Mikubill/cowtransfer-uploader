@@ -142,10 +142,15 @@ func downloadItem(item downloadDetailsBlock) error {
 	if err != nil {
 		return fmt.Errorf("failed Parsing with error: %s, onfile: %s", err, item.FileName)
 	}
-	bar := pb.Full.Start64(int64(numSize * 1024))
-	bar.Set(pb.Bytes, true)
+	var bar *pb.ProgressBar
+	if !runConfig.silentMode {
+		bar = pb.Full.Start64(int64(numSize * 1024))
+		bar.Set(pb.Bytes, true)
+	}
 	err = downloadFile(filePath, config.Link, bar)
-	bar.Finish()
+	if !runConfig.silentMode && bar != nil {
+		bar.Finish()
+	}
 	if err != nil {
 		return fmt.Errorf("failed DownloadConfig with error: %s, onfile: %s", err, item.FileName)
 	}
@@ -164,7 +169,9 @@ func (wc *writeCounter) Write(p []byte) (int, error) {
 		return 0, err
 	}
 	wc.offset += int64(n)
-	wc.bar.Add(n)
+	if !runConfig.silentMode && wc.bar != nil {
+		wc.bar.Add(n)
+	}
 	return n, nil
 }
 
@@ -185,7 +192,9 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 	if err != nil {
 		return err
 	}
-	bar.SetTotal(length)
+	if !runConfig.silentMode && bar != nil {
+		bar.SetTotal(length)
+	}
 
 	out, err := os.Create(filepath)
 	if err != nil {
