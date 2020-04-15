@@ -222,7 +222,7 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 		log.Printf("parallel = %d", _parallel)
 		log.Printf("block = %d", blk)
 	}
-	for i := 0; i < _parallel; i++ {
+	for i := 0; i <= _parallel; i++ {
 		wg.Add(1)
 		start := int64(i) * blk
 		end := start + blk
@@ -231,10 +231,19 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 			ranger = fmt.Sprintf("%d-%d", start, length)
 		}
 		if runConfig.debugMode {
-			log.Printf("range = %s", ranger)
+			log.Printf("downloading parallel = %d\n", i)
+			log.Printf("selecting block = %d\n", blk)
+			log.Printf("using range = %s\n", ranger)
 		}
-		counter := &writeCounter{bar: bar, offset: start, writer: out}
-		go parallelDownloader(ranger, url, counter, wg)
+		go func() {
+			counter := &writeCounter{bar: bar, offset: start, writer: out}
+			for {
+				err = parallelDownloader(ranger, url, counter, wg)
+				if err == nil {
+					break
+				}
+			}
+		}()
 	}
 	wg.Wait()
 
@@ -242,15 +251,15 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 	return nil
 }
 
-func parallelDownloader(ranger string, url string, counter *writeCounter, wg *sync.WaitGroup) {
+func parallelDownloader(ranger string, url string, counter *writeCounter, wg *sync.WaitGroup) error {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Printf("createRequest error: %s\n", err)
+		return fmt.Errorf("createRequest error: %s\n", err)
 	}
 	req.Header.Set("Range", "bytes="+ranger)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Printf("doRequest error: %s\n", err)
+		return fmt.Errorf("doRequest error: %s\n", err)
 	}
 	defer func() {
 		_ = resp.Body.Close()
@@ -258,9 +267,10 @@ func parallelDownloader(ranger string, url string, counter *writeCounter, wg *sy
 
 	_, err = io.Copy(ioutil.Discard, io.TeeReader(resp.Body, counter))
 	if err != nil {
-		fmt.Printf("parallel bytes copy returns: %s", err)
+		return fmt.Errorf("parallel bytes copy returns: %s", err)
 	}
 	wg.Done()
+	return nil
 }
 
 func isExist(path string) bool {
