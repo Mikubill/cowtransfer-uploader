@@ -37,9 +37,9 @@ case $ARCH in
     ;;
 esac
 
-VERSION=$(curl https://api.github.com/repos/Mikubill/cowtransfer-uploader/releases/latest 2>&1 | grep -o "[0-9]\.[0-9]\.[0-9]" | head -n 1)
+DOWNLOAD_URL=$(curl -fsSL https://api.github.com/repos/Mikubill/cowtransfer-uploader/releases/latest | grep "browser_download_url.*$OS.*$ARCH" | cut -d '"' -f 4)
 
-curl -L https://github.com/Mikubill/cowtransfer-uploader/releases/download/v$VERSION/cowtransfer-uploader_$VERSION\_$OS\_$ARCH.tar.gz | tar xz
+curl -L "$DOWNLOAD_URL" | tar xz
 
 printf "\nCowTransfer-uploader Downloded.\n\n"
 exit 0
