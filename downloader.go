@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"sync"
+	"time"
 )
 
 const (
@@ -53,6 +54,13 @@ func download(v string) error {
 	fmt.Printf("Remote: %s\n", v)
 	detailsURL := fmt.Sprintf(downloadDetails, fileID, runConfig.passCode)
 	resp, err := http.Get(detailsURL)
+	req, err := http.NewRequest("GET", detailsURL, nil)
+	if err != nil {
+		return fmt.Errorf("getDownloadDetails returns error: %s", err)
+	}
+	req.Header.Set("Referer", fmt.Sprintf("https://cowtransfer.com/s/%s", fileID))
+	req.Header.Set("Cookie", fmt.Sprintf("cf-cs-k-20181214=%d;", time.Now().UnixNano()))
+	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("getDownloadDetails returns error: %s", err)
 	}
