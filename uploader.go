@@ -414,6 +414,7 @@ func getUploadConfig(info os.FileInfo, config *prepareSendResp) (*prepareSendRes
 		"fileId":        "",
 		"type":          "",
 		"fileName":      info.Name(),
+		"originalName":      info.Name(),
 		"fileSize":      strconv.FormatInt(info.Size(), 10),
 		"transferGuid":  config.TransferGUID,
 		"storagePrefix": config.Prefix,
