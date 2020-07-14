@@ -185,7 +185,12 @@ func (wc *writeCounter) Write(p []byte) (int, error) {
 
 func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 
-	resp, err := http.Head(url)
+	req, err := http.NewRequest("HEAD", url, nil)
+	if err != nil {
+		return err
+	}
+	addHeaders(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -265,6 +270,7 @@ func parallelDownloader(ranger string, url string, counter *writeCounter, wg *sy
 		return fmt.Errorf("createRequest error: %s\n", err)
 	}
 	req.Header.Set("Range", "bytes="+ranger)
+	addHeaders(req)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("doRequest error: %s\n", err)
