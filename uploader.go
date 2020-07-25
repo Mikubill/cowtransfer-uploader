@@ -331,15 +331,25 @@ func finishUpload(config *prepareSendResp, info os.FileInfo, hashMap *cmap.Concu
 		log.Printf("merge payload: %s\n", postBody)
 	}
 	reader := bytes.NewReader([]byte(postBody))
-	_, err := newRequest(mergeFileURL, reader, config.UploadToken, 0)
+	resp, err := newRequest(mergeFileURL, reader, config.UploadToken, 0)
 	if err != nil {
+		return err
+	}
+
+	// read returns
+	var mergeResp *uploadResult
+	if err = json.Unmarshal(resp, &mergeResp); err != nil {
 		return err
 	}
 
 	if runConfig.debugMode {
 		log.Println("step2 -> api/uploaded")
 	}
-	data := map[string]string{"transferGuid": config.TransferGUID, "fileId": ""}
+	data := map[string]string{
+		"transferGuid": config.TransferGUID,
+		"fileGuid": config.FileGUID,
+		"hash": mergeResp.Hash,
+	}
 	body, err := newMultipartRequest(uploadFinish, data, 0)
 	if err != nil {
 		return err
@@ -419,9 +429,15 @@ func getUploadConfig(info os.FileInfo, config *prepareSendResp) (*prepareSendRes
 		"transferGuid":  config.TransferGUID,
 		"storagePrefix": config.Prefix,
 	}
-	_, err := newMultipartRequest(beforeUpload, data, 0)
+	resp, err := newMultipartRequest(beforeUpload, data, 0)
 	if err != nil {
 		return nil, err
+	}
+	var beforeResp *beforeSendResp
+	if err = json.Unmarshal(resp, &beforeResp); err != nil {
+		return nil, err
+	} else {
+		config.FileGUID = beforeResp.FileGuid
 	}
 	return config, nil
 }

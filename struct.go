@@ -15,9 +15,16 @@ type mainConfig struct {
 	silentMode bool
 }
 
+
+type uploadResult struct {
+	Hash string `json:"hash"`
+	Key  string `json:"key"`
+}
+
 type prepareSendResp struct {
 	UploadToken  string `json:"uptoken"`
 	TransferGUID string `json:"transferguid"`
+	FileGUID     string `json:"fileguid"`
 	UniqueURL    string `json:"uniqueurl"`
 	Prefix       string `json:"prefix"`
 	QRCode       string `json:"qrcode"`
@@ -28,6 +35,10 @@ type prepareSendResp struct {
 type uploadResponse struct {
 	Ticket string `json:"ctx"`
 	Hash   int    `json:"crc32"`
+}
+
+type beforeSendResp struct {
+	FileGuid string `json:"fileGuid"`
 }
 
 type finishResponse struct {
