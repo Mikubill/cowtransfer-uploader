@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"github.com/cheggaaa/pb/v3"
 	"log"
 	"os"
 	"reflect"
@@ -20,6 +21,7 @@ var (
 type uploadPart struct {
 	content []byte
 	count   int64
+	bar     *pb.ProgressBar
 }
 
 func init() {

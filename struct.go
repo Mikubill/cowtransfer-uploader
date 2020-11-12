@@ -15,7 +15,6 @@ type mainConfig struct {
 	silentMode bool
 }
 
-
 type uploadResult struct {
 	Hash string `json:"hash"`
 	Key  string `json:"key"`
