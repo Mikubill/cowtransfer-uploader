@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cheggaaa/pb/v3"
 	"io"
 	"io/ioutil"
 	"log"
@@ -14,21 +13,28 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 const (
 	downloadDetails = "https://cowtransfer.com/transfer/transferdetail?url=%s&treceive=undefined&passcode=%s"
+	downloadFiles   = "https://cowtransfer.com/transfer/files?page=0&guid=%s"
 	downloadConfig  = "https://cowtransfer.com/transfer/download?guid=%s"
 )
 
 var regex = regexp.MustCompile("[0-9a-f]{14}")
 
 type downloadDetailsResponse struct {
-	GUID         string                 `json:"guid"`
-	DownloadName string                 `json:"downloadName"`
-	Deleted      bool                   `json:"deleted"`
-	Uploaded     bool                   `json:"uploaded"`
-	Details      []downloadDetailsBlock `json:"transferFileDtos"`
+	GUID         string `json:"guid"`
+	DownloadName string `json:"downloadName"`
+	Deleted      bool   `json:"deleted"`
+	Uploaded     bool   `json:"uploaded"`
+	// Details      []downloadDetailsBlock `json:"transferFileDtos"`
+}
+
+type downloadFilesResponse struct {
+	Details []downloadDetailsBlock `json:"transferFileDtos"`
 }
 
 type downloadDetailsBlock struct {
@@ -52,29 +58,13 @@ func download(v string) error {
 		log.Println("step1 -> api/getGuid")
 	}
 	fmt.Printf("Remote: %s\n", v)
-	detailsURL := fmt.Sprintf(downloadDetails, fileID, runConfig.passCode)
-	//resp, _ := http.Get(detailsURL)
-	req, err := http.NewRequest("GET", detailsURL, nil)
-	if err != nil {
-		return fmt.Errorf("getDownloadDetails returns error: %s", err)
-	}
-	req.Header.Set("Referer", fmt.Sprintf("https://cowtransfer.com/s/%s", fileID))
-	req.Header.Set("Cookie", fmt.Sprintf("cf-cs-k-20181214=%d;", time.Now().UnixNano()))
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("getDownloadDetails returns error: %s", err)
-	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("readDownloadDetails returns error: %s", err)
-	}
-
-	_ = resp.Body.Close()
+	body, err := fetchWithCookie(fmt.Sprintf(downloadDetails, fileID, runConfig.passCode), fileID)
 
 	if runConfig.debugMode {
 		log.Printf("returns: %v\n", string(body))
 	}
+
 	details := new(downloadDetailsResponse)
 	if err := json.Unmarshal(body, details); err != nil {
 		return fmt.Errorf("unmatshal DownloadDetails returns error: %s", err)
@@ -92,13 +82,44 @@ func download(v string) error {
 		return fmt.Errorf("link not finish upload yet")
 	}
 
-	for _, item := range details.Details {
+	body, err = fetchWithCookie(fmt.Sprintf(downloadFiles, details.GUID), fileID)
+
+	if runConfig.debugMode {
+		log.Printf("returns: %v\n", string(body))
+	}
+
+	files := new(downloadFilesResponse)
+	if err := json.Unmarshal(body, files); err != nil {
+		return fmt.Errorf("unmatshal DownloadDetails returns error: %s", err)
+	}
+
+	for _, item := range files.Details {
 		err = downloadItem(item)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
 	return nil
+}
+
+func fetchWithCookie(link, fileID string) ([]byte, error) {
+	req, err := http.NewRequest("GET", link, nil)
+	if err != nil {
+		return nil, fmt.Errorf("getDownloadDetails returns error: %s", err)
+	}
+	req.Header.Set("Referer", fmt.Sprintf("https://cowtransfer.com/s/%s", fileID))
+	req.Header.Set("Cookie", fmt.Sprintf("cf-cs-k-20181214=%d;", time.Now().UnixNano()))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("getDownloadDetails returns error: %s", err)
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("readDownloadDetails returns error: %s", err)
+	}
+
+	_ = resp.Body.Close()
+	return body, nil
 }
 
 func downloadItem(item downloadDetailsBlock) error {
