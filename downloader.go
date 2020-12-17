@@ -19,7 +19,7 @@ import (
 
 const (
 	downloadDetails = "https://cowtransfer.com/transfer/transferdetail?url=%s&treceive=undefined&passcode=%s"
-	downloadFiles   = "https://cowtransfer.com/transfer/files?page=0&guid=%s"
+	downloadFiles   = "https://cowtransfer.com/transfer/files?page=%d&guid=%s"
 	downloadConfig  = "https://cowtransfer.com/transfer/download?guid=%s"
 )
 
@@ -35,6 +35,7 @@ type downloadDetailsResponse struct {
 
 type downloadFilesResponse struct {
 	Details []downloadDetailsBlock `json:"transferFileDtos"`
+	Pages   int64                  `json:"totalPages"`
 }
 
 type downloadDetailsBlock struct {
@@ -82,15 +83,19 @@ func download(v string) error {
 		return fmt.Errorf("link not finish upload yet")
 	}
 
-	body, err = fetchWithCookie(fmt.Sprintf(downloadFiles, details.GUID), fileID)
-
-	if runConfig.debugMode {
-		log.Printf("returns: %v\n", string(body))
+	files, err := fetchPage(0, details.GUID, fileID)
+	if err != nil {
+		return err
 	}
 
-	files := new(downloadFilesResponse)
-	if err := json.Unmarshal(body, files); err != nil {
-		return fmt.Errorf("unmatshal DownloadDetails returns error: %s", err)
+	if files.Pages > 1 {
+		for i := 1; 1 < files.Pages; i++ {
+			extra, err := fetchPage(i, details.GUID, fileID)
+			if err != nil {
+				continue
+			}
+			files.Details = append(files.Details, extra.Details...)
+		}
 	}
 
 	for _, item := range files.Details {
@@ -100,6 +105,23 @@ func download(v string) error {
 		}
 	}
 	return nil
+}
+
+func fetchPage(page int, guid string, fileID string) (*downloadFilesResponse, error) {
+	body, err := fetchWithCookie(fmt.Sprintf(downloadFiles, page, guid), fileID)
+	if err != nil {
+		return nil, fmt.Errorf("fetch DownloadDetails returns error: %s", err)
+	}
+
+	if runConfig.debugMode {
+		log.Printf("returns: %v\n", string(body))
+	}
+
+	files := new(downloadFilesResponse)
+	if err := json.Unmarshal(body, files); err != nil {
+		return nil, fmt.Errorf("unmatshal DownloadDetails returns error: %s", err)
+	}
+	return files, nil
 }
 
 func fetchWithCookie(link, fileID string) ([]byte, error) {
