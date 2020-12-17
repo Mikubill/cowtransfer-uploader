@@ -5,8 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/cheggaaa/pb/v3"
-	cmap "github.com/orcaman/concurrent-map"
 	"hash/crc32"
 	"io"
 	"io/ioutil"
@@ -20,6 +18,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cheggaaa/pb/v3"
+	cmap "github.com/orcaman/concurrent-map"
 )
 
 const (
@@ -300,7 +301,7 @@ func blockPut(postURL string, buf []byte, token string) (string, error) {
 			if runConfig.debugMode {
 				log.Printf("block hashcheck failed (retrying)")
 			}
-			return "", err
+			return "", fmt.Errorf("block hashcheck failed")
 		}
 	}
 	return rBody.Ticket, nil
