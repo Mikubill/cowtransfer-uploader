@@ -89,7 +89,7 @@ func download(v string) error {
 	}
 
 	if files.Pages > 1 {
-		for i := 1; 1 < files.Pages; i++ {
+		for i := 1; i < int(files.Pages); i++ {
 			extra, err := fetchPage(i, details.GUID, fileID)
 			if err != nil {
 				continue
