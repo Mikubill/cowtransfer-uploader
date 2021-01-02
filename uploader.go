@@ -259,7 +259,7 @@ func uploader(ch *chan *uploadPart, conf uploadConfig) {
 				failFlag = true
 				break
 			}
-			if !runConfig.silentMode && item.bar != nil {
+			if !runConfig.silentMode && item.bar != nil && !failFlag {
 				item.bar.Add(len(buf))
 			}
 		}
@@ -307,8 +307,8 @@ func blockPut(postURL string, buf []byte, token string) (string, error) {
 	return rBody.Ticket, nil
 }
 
-func hashBlock(buf []byte) int {
-	return int(crc32.ChecksumIEEE(buf))
+func hashBlock(buf []byte) int64 {
+	return int64(crc32.ChecksumIEEE(buf))
 }
 
 func urlSafeEncode(enc string) string {
