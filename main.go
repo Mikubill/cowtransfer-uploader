@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"github.com/cheggaaa/pb/v3"
 	"log"
 	"os"
 	"reflect"
 	"strings"
 	"unsafe"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -26,9 +27,9 @@ type uploadPart struct {
 
 func init() {
 	addFlag(&runConfig.token, []string{"-cookie", "-c", "--cookie"}, "", "Your User cookie (optional)")
-	addFlag(&runConfig.parallel, []string{"-parallel", "-p", "--parallel"}, 4, "Parallel task count (default 4)")
-	addFlag(&runConfig.blockSize, []string{"-block", "-b", "--block"}, 262144, "Upload Block Size (default 262144)")
-	addFlag(&runConfig.interval, []string{"-timeout", "-t", "--timeout"}, 10, "Request retry/timeout limit (in second, default 10)")
+	addFlag(&runConfig.parallel, []string{"-parallel", "-p", "--parallel"}, 3, "Parallel task count (default 3)")
+	addFlag(&runConfig.blockSize, []string{"-block", "-b", "--block"}, 1200000, "Upload Block Size (default 1200000)")
+	addFlag(&runConfig.interval, []string{"-timeout", "-t", "--timeout"}, 15, "Request retry/timeout limit (in second, default 10)")
 	addFlag(&runConfig.prefix, []string{"-prefix", "-o", "--output"}, ".", "File download dictionary/name (default \".\")")
 	addFlag(&runConfig.singleMode, []string{"-single", "-s", "--single"}, false, "Single Upload Mode")
 	addFlag(&runConfig.debugMode, []string{"-verbose", "-v", "--verbose"}, false, "Verbose Mode")

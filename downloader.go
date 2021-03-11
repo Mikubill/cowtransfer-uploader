@@ -266,7 +266,7 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 	if err := out.Truncate(length); err != nil {
 		return fmt.Errorf("tmpfile fruncate failed: %s", err)
 	}
-	if length > 10*1024*1024 && resp.Header.Get("Accept-Ranges") != "" && runConfig.parallel > 1 {
+	if length > 10*1024*1024 && resp.Header.Get("Accept-Ranges") != "" && runConfig.parallel > 1 || runConfig.parallel < 1 {
 		_parallel = runConfig.parallel
 	}
 
@@ -278,7 +278,7 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 		log.Printf("parallel = %d", _parallel)
 		log.Printf("block = %d", blk)
 	}
-	for i := 0; i <= _parallel; i++ {
+	for i := 0; i < _parallel; i++ {
 		wg.Add(1)
 		start := int64(i) * blk
 		end := start + blk

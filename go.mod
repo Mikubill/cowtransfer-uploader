@@ -3,10 +3,11 @@ module cowtransfer-uploader
 go 1.15
 
 require (
-	github.com/cheggaaa/pb/v3 v3.0.5
+	github.com/cheggaaa/pb/v3 v3.0.6
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/jessevdk/go-flags v1.4.0 // indirect
-	github.com/mattn/go-runewidth v0.0.9 // indirect
-	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
-	golang.org/x/sys v0.0.0-20201231184435-2d18734c6014 // indirect
+	github.com/mattn/go-runewidth v0.0.10 // indirect
+	github.com/orcaman/concurrent-map v0.0.0-20210106121528-16402b402231
+	github.com/rivo/uniseg v0.2.0 // indirect
+	golang.org/x/sys v0.0.0-20210309074719-68d13333faf2 // indirect
 )
