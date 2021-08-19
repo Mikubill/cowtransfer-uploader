@@ -23,13 +23,13 @@ import (
 )
 
 const (
-	prepareSend  = "https://cowtransfer.com/transfer/preparesend"
-	setPassword  = "https://cowtransfer.com/transfer/v2/bindpasscode"
-	beforeUpload = "https://cowtransfer.com/transfer/beforeupload"
+	prepareSend  = "https://cowtransfer.com/api/transfer/preparesend"
+	setPassword  = "https://cowtransfer.com/api/transfer/v2/bindpasscode"
+	beforeUpload = "https://cowtransfer.com/api/transfer/beforeupload"
 	// uploadInitEndpoint = "https://upload.qiniup.com/mkblk/%d"
 	// uploadEndpoint     = "https://upload.qiniup.com/bput/%s/%d"
-	uploadFinish   = "https://cowtransfer.com/transfer/uploaded"
-	uploadComplete = "https://cowtransfer.com/transfer/complete"
+	uploadFinish   = "https://cowtransfer.com/api/transfer/uploaded"
+	uploadComplete = "https://cowtransfer.com/api/transfer/complete"
 	// uploadMergeFile = "https://upload.qiniup.com/mkfile/%s/key/%s/fname/%s"
 	initUpload = "https://upload-fog-cn-east-1.qiniup.com/buckets/cowtransfer-yz/objects/%s/uploads"
 	doUpload   = "https://upload-fog-cn-east-1.qiniup.com/buckets/cowtransfer-yz/objects/%s/uploads/%s/%d"

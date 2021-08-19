@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	downloadDetails = "https://cowtransfer.com/transfer/transferdetail?url=%s&treceive=undefined&passcode=%s"
-	downloadFiles   = "https://cowtransfer.com/transfer/files?page=%d&guid=%s"
-	downloadConfig  = "https://cowtransfer.com/transfer/download?guid=%s"
+	downloadDetails = "https://cowtransfer.com/api/transfer/transferdetail?url=%s&treceive=undefined&passcode=%s"
+	downloadFiles   = "https://cowtransfer.com/api/transfer/files?page=%d&guid=%s"
+	downloadConfig  = "https://cowtransfer.com/api/transfer/download?guid=%s"
 )
 
 var regex = regexp.MustCompile("[0-9a-f]{14}")
