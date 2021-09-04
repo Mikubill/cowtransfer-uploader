@@ -495,6 +495,16 @@ func addHeaders(req *http.Request) *http.Request {
 	return req
 }
 
+func addTk(req *http.Request) {
+	ck := runConfig.token
+	if runConfig.authCode != "" {
+		ck = fmt.Sprintf("%s; cow-auth-token=%s", runConfig.token, runConfig.authCode)
+	}
+
+	req.Header.Set("cookie", ck)
+	req.Header.Set("authorization", runConfig.authCode)
+}
+
 func newMultipartRequest(url string, params map[string]string, retry int) ([]byte, error) {
 	if runConfig.debugMode {
 		log.Printf("retrying: %v", retry)
@@ -520,7 +530,7 @@ func newMultipartRequest(url string, params map[string]string, retry int) ([]byt
 	}
 	req.Header.Set("content-type", fmt.Sprintf("multipart/form-data;boundary=%s", writer.Boundary()))
 	req.Header.Set("referer", "https://cowtransfer.com/")
-	req.Header.Set("cookie", runConfig.token)
+	addTk(req)
 	if runConfig.debugMode {
 		log.Println(req.Header)
 	}

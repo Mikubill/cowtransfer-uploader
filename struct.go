@@ -9,6 +9,7 @@ type mainConfig struct {
 	singleMode bool
 	version    bool
 	keepMode   bool
+	authCode   string
 	blockSize  int
 	hashCheck  bool
 	passCode   string
