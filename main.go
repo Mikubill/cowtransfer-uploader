@@ -93,9 +93,9 @@ func printUsage() {
 	fmt.Printf("\nUsage:\n\n  %s [options] file(s)/url(s)\n\n", os.Args[0])
 	fmt.Printf("Options:\n\n")
 	for _, val := range commands {
-		s := fmt.Sprintf("  %s %s", val[0], val[1])
-		block := strings.Repeat(" ", 30-len(s))
-		fmt.Printf("%s%s%s\n", s, block, val[2])
+		// s := fmt.Sprintf(" %s %s", val[0], val[1])
+		block := strings.Repeat(" ", 30-len(val[0]))
+		fmt.Printf("%s%s%s\n", val[0], block, val[2])
 	}
 	fmt.Printf("\n")
 }
@@ -108,7 +108,12 @@ func printVersion() {
 }
 
 func addFlag(p interface{}, cmd []string, val interface{}, usage string) {
-	s := []string{strings.Join(cmd, ", "), "", usage}
+	c := fmt.Sprintf(" --%s", cmd[0])
+	if len(cmd) > 1 {
+		c += fmt.Sprintf(", -%s", cmd[1])
+	}
+
+	s := []string{c, "", usage}
 	ptr := unsafe.Pointer(reflect.ValueOf(p).Pointer())
 	for _, item := range cmd {
 		switch val := val.(type) {
