@@ -14,6 +14,7 @@ type mainConfig struct {
 	hashCheck  bool
 	passCode   string
 	silentMode bool
+	validDays  int
 }
 
 type uploadResult struct {

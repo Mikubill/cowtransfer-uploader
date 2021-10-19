@@ -23,17 +23,14 @@ import (
 )
 
 const (
-	prepareSend  = "https://cowtransfer.com/api/transfer/preparesend"
-	setPassword  = "https://cowtransfer.com/api/transfer/v2/bindpasscode"
-	beforeUpload = "https://cowtransfer.com/api/transfer/beforeupload"
-	// uploadInitEndpoint = "https://upload.qiniup.com/mkblk/%d"
-	// uploadEndpoint     = "https://upload.qiniup.com/bput/%s/%d"
+	prepareSend    = "https://cowtransfer.com/api/transfer/preparesend"
+	setPassword    = "https://cowtransfer.com/api/transfer/v2/bindpasscode"
+	beforeUpload   = "https://cowtransfer.com/api/transfer/beforeupload"
 	uploadFinish   = "https://cowtransfer.com/api/transfer/uploaded"
 	uploadComplete = "https://cowtransfer.com/api/transfer/complete"
-	// uploadMergeFile = "https://upload.qiniup.com/mkfile/%s/key/%s/fname/%s"
-	initUpload = "https://upload-fog-cn-east-1.qiniup.com/buckets/cowtransfer-yz/objects/%s/uploads"
-	doUpload   = "https://upload-fog-cn-east-1.qiniup.com/buckets/cowtransfer-yz/objects/%s/uploads/%s/%d"
-	finUpload  = "https://upload-fog-cn-east-1.qiniup.com/buckets/cowtransfer-yz/objects/%s/uploads/%s"
+	initUpload     = "https://upload-fog-cn-east-1.qiniup.com/buckets/cowtransfer-yz/objects/%s/uploads"
+	doUpload       = "https://upload-fog-cn-east-1.qiniup.com/buckets/cowtransfer-yz/objects/%s/uploads/%s/%d"
+	finUpload      = "https://upload-fog-cn-east-1.qiniup.com/buckets/cowtransfer-yz/objects/%s/uploads/%s"
 
 	// block = 1024 * 1024
 )
@@ -354,6 +351,7 @@ func completeUpload(config *prepareSendResp) error {
 
 func getSendConfig(totalSize int64) (*prepareSendResp, error) {
 	data := map[string]string{
+		"validDays": strconv.Itoa(runConfig.validDays),
 		"totalSize": strconv.FormatInt(totalSize, 10),
 	}
 	body, err := newMultipartRequest(prepareSend, data, 0)
