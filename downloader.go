@@ -283,7 +283,7 @@ func downloadFile(filepath string, url string, bar *pb.ProgressBar) error {
 		start := int64(i) * blk
 		end := start + blk
 		ranger := fmt.Sprintf("%d-%d", start, end)
-		if end >= length {
+		if end >= length || i == _parallel-1 {
 			ranger = fmt.Sprintf("%d-%d", start, length)
 		}
 		if runConfig.debugMode {
