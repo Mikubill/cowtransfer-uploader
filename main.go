@@ -40,6 +40,7 @@ func init() {
 	addFlag(&runConfig.version, []string{"version"}, false, "Print version and exit")
 	addFlag(&runConfig.silentMode, []string{"silent"}, false, "Enable silent mode")
 	addFlag(&runConfig.validDays, []string{"valid"}, 1, "Valid Days (default 1)")
+	addFlag(&runConfig.shortCode, []string{"short"}, "", "Short Download Code")
 
 	flag.Usage = printUsage
 	flag.Parse()
@@ -57,6 +58,17 @@ func main() {
 		log.Printf("config = %+v", runConfig)
 		log.Printf("files = %s", files)
 	}
+
+	if "" != runConfig.shortCode {
+		url, err := translate(runConfig.shortCode)
+		if err != nil {
+			fmt.Printf("unable parse short code: %v\n", err)
+			return
+		}
+
+		files = append(files, url)
+	}
+
 	if len(files) == 0 {
 		fmt.Printf("missing file(s) or url(s)\n")
 		printUsage()

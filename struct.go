@@ -15,6 +15,7 @@ type mainConfig struct {
 	passCode   string
 	silentMode bool
 	validDays  int
+	shortCode  string
 }
 
 type uploadResult struct {
