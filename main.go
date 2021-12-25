@@ -62,9 +62,9 @@ func main() {
 		printUsage()
 		return
 	}
-	if runConfig.blockSize > 4194304 {
-		runConfig.blockSize = 524288
-	}
+	// if runConfig.blockSize > 4194304 {
+	// 	runConfig.blockSize = 524288
+	// }
 
 	var f []string
 	for _, v := range files {
