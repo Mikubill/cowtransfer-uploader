@@ -39,7 +39,7 @@ func init() {
 	addFlag(&runConfig.passCode, []string{"password"}, "", "Set password")
 	addFlag(&runConfig.version, []string{"version"}, false, "Print version and exit")
 	addFlag(&runConfig.silentMode, []string{"silent"}, false, "Enable silent mode")
-	addFlag(&runConfig.validDays, []string{"valid"}, 1, "Valid Days (default 1)")
+	addFlag(&runConfig.validDays, []string{"valid"}, 0, "Valid Days")
 
 	flag.Usage = printUsage
 	flag.Parse()
